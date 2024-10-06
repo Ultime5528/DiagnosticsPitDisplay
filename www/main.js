@@ -1,5 +1,8 @@
+let animationTimeout = null;
+
 const showNoRobot = () => {
-    setTimeout(() => {
+    clearTimeout(animationTimeout);
+    animationTimeout = setTimeout(() => {
         document.getElementById("no-robot-prompt").style.opacity = 1;
     }, 200);
     document.getElementById("waiting-tests-prompt").style.opacity = 0;
@@ -9,7 +12,8 @@ const showNoRobot = () => {
 }
 
 const showConnected = () => {
-    setTimeout(() => {
+    clearTimeout(animationTimeout);
+    animationTimeout = setTimeout(() => {
         document.getElementById("waiting-tests-prompt").style.opacity = 1;
     }, 200);
     document.getElementById("no-robot-prompt").style.opacity = 0;
@@ -19,7 +23,8 @@ const showConnected = () => {
 }
 
 const showInitializing = () => {
-    setTimeout(() => {
+    clearTimeout(animationTimeout);
+    animationTimeout = setTimeout(() => {
         document.getElementById("initializing-tests").style.opacity = 1;
         
     }, 200);
@@ -30,7 +35,8 @@ const showInitializing = () => {
 }
 
 const showRunning = () => {
-    setTimeout(() => {
+    clearTimeout(animationTimeout);
+    animationTimeout = setTimeout(() => {
         document.getElementById("running-tests").style.opacity = 1;
     }, 200);
     document.getElementById("waiting-tests-prompt").style.opacity = 0;
@@ -40,7 +46,8 @@ const showRunning = () => {
 }
 
 const showSuccess = () => {
-    setTimeout(() => {
+    clearTimeout(animationTimeout);
+    animationTimeout = setTimeout(() => {
         document.getElementById("tests-success").style.opacity = 1;
     }, 200);
     document.getElementById("waiting-tests-prompt").style.opacity = 0;
@@ -139,51 +146,66 @@ class Test {
     }
 }
 
-setInterval(async () => {
-    let connected = await robot.getIsConnected();
-    if(connected) {
-        let status = robot.getCurrentTestState();
-        if(status === "waiting") {
-            showConnected();
-        } else if(status === "initializing") {
-            showInitializing();
-        } else if(status === "passed") {
-            showSuccess();
-        }
-        
-    }
-    else showNoRobot();
-})
+let tests = {};
 
-/*(async () => {
-    showNoRobot()
-    await new Promise((res) => setTimeout(res, 2500))
-    showConnected()
-    await new Promise((res) => setTimeout(res, 2500))
-    let task1 = new Test("find out who tf asked")
-    let task2 = new Test("rizz up other robots")
-    let task3 = new Test("test bmw engine inside of robot")
-    
-    task3.setState("running");
-    task3.setTimeElapsed(-1);
-    task3.updateTime();
-    task3.setState("failed")
-    let task4 = new Test("beer intake")
-    let task5 = new Test("test drunk driving system")
-    task4.setState("running");
-    showInitializing()
-    task1.setState("running")
-    task2.setState("running")
-    task2.updateTime();
-    task2.setState("passed")
-    await new Promise((res) => setTimeout(res, 1500))
-    showRunning()
-    await new Promise((res) => setTimeout(res, 1500))
-    task1.setState("failed")
-    await new Promise((res) => setTimeout(res, 2346))
-    task4.setState("passed")
-    task5.setState("running")
-    await new Promise((res) => setTimeout(res, 2150))
-    task5.setState("passed")
-})()
+const onConnect = () => {
+    console.log("Robot connected");
+    if(robot.getCurrentTestState() !== "waiting") return;
+    showConnected();
+};
+
+const onDisconnect = () => {
+    Object.values(tests).forEach(test => test.destroy());
+    tests = {};
+    showNoRobot();
+    console.log("Robot disconnected");
+};
+
+robot.onConnect.addEventListener(onConnect);
+robot.onDisconnect.addEventListener(onDisconnect);
+
+robot.isConnected() ? onConnect() : onDisconnect();
+
+robot.onTestsUpdate.addEventListener((status) => {
+    console.log("Tests update: " + status);
+    if(status === "waiting") {
+        showConnected();
+    } else if(status === "initializing") {
+        showInitializing();
+    } else if(status === "running") {
+        showRunning();
+    } else if(status === "success") {
+        showSuccess();
+    } else if(status === "failed") {
+        // TODO: show what failed specifically in each subsystem.
+    }
+});
+
+
+robot.onReceiveTestList.addEventListener((testList) => {
+    Object.values(tests).forEach(test => test.destroy());
+    tests = {};
+    console.log("Received test list: ", testList);
+    testList.forEach(test => {
+        let task = new Test(test);
+        tests[test] = task;
+        task.setState("waiting");
+        robot.subscribeTestUpdate(test, (status) => {
+            task.setState(status);
+        });
+    });
+});
+
+robot.onTestUpdate.addEventListener((test, status) => {
+    console.log("Test update: ", test, status);
+    tests[test].setState(status);
+});
+
+/*
+let task1 = new Test("Test 1");
+task1.setState("running");
+task1.setTimeElapsed(-1);
+task1.updateTime();
+task1.setState("failed");
+task1.destroy();
 */

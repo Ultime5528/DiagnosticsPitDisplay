@@ -59,7 +59,7 @@ body > div {
 
 .waiting-tests-prompt > .material-symbols-outlined {
     font-size: 5em;
-    color: #4CAF50;
+    color: #2196F3;
 }
 
 .initializing-tests {
@@ -133,4 +133,26 @@ table {
     100% {
         opacity: 0;
     }
+}
+
+#fullscreen {
+    position: absolute;
+    z-index: 100;
+    bottom: 20px;
+    right: 20px;
+    background-color: rgba(0,0,0,0);
+    color: rgba(120,120,120,1);
+    font-size: 2em;
+    border: 0;
+    cursor: pointer;
+    opacity: 0;
+    transition: 0.2s linear opacity;
+}
+
+#fullscreen:focus {
+    outline:none;
+}
+
+#fullscreen:hover {
+    opacity: 1;
 }

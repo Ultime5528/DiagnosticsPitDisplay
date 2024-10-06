@@ -1,14 +1,16 @@
 {
   "name": "pitdisplay",
   "version": "1.0.0",
-  "description": "Pit Display for FRC Team 5528",
+  "description": "Diagnostics Pit Display for FRC Team 5528",
   "main": "main.js",
   "scripts": {
     "start": "electron main.js"
   },
   "keywords": [
     "frc",
-    "firstrobotics"
+    "firstrobotics",
+    "pitdisplay",
+    "diagnostics"
   ],
   "author": "Ultime 5528",
   "license": "MIT",
