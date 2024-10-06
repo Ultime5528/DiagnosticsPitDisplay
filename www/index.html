@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <title>Ultime 5528 - Unit Tests</title>
+    <style>
+        .material-symbols-outlined {
+          font-variation-settings:
+          'FILL' 0,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 24
+        }
+    </style>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div class="no-robot-prompt" id="no-robot-prompt" style="opacity: 0;">
+        <span class="material-symbols-outlined">
+            close
+        </span>
+        <h1>Aucune connection au robot<br><small>(No robot connection)</small></h1>
+    </div>
+    <div class="waiting-tests-prompt" id="waiting-tests-prompt" style="opacity: 0;">
+        <span class="material-symbols-outlined">
+            play_circle
+        </span>
+        <h1>En attente du démarrage des tests<br><small>(Waiting for tests)</small></h1>
+    </div>
+    <div class="initializing-tests" id="initializing-tests" style="opacity: 0;">
+        <span class="material-symbols-outlined">
+            autorenew
+        </span>
+        <h1>Initialisation des tests<br><small>(Initializing tests)</small></h1>
+    </div>
+    <div class="running-tests" id="running-tests" style="opacity: 0;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nom du test<br><small>(Test Name)</small></th>
+                    <th>Status du test<br><small>(Test Status)</small></th>
+                    <th>Temps écoulé<br><small>(Time Elapsed)</small></th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+    <div class="tests-success" id="tests-success" style="opacity: 0;">
+        <span class="material-symbols-outlined">
+            check
+        </span>
+        <h1>Tous les tests ont passé<br><small>(All tests passed)</small></h1>
+    </div>
+    <script src="main.js"></script>
+</body>
+</html>
