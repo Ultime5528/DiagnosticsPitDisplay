@@ -48,8 +48,12 @@ function createWindow () {
   const ntcore = DEBUG ? NetworkTables.getInstanceByURI("127.0.0.1") : NetworkTables.getInstanceByTeam(TEAM_NUMBER)
   ipcMain.handle("is-robot-connected", async () => !ntcore.isRobotConnecting() && ntcore.isRobotConnected())
   
-  /*ntcore.addRobotConnectionListener((connected) => secondaryWindow.webContents.send("robot-connection-update", currentlyConnected = connected), true);
-  ntcore.createTopic("/Tests/Status", NetworkTablesTypeInfos.kString).subscribe(value => secondaryWindow.webContents.send("test-status", value), true);
+  ntcore.addRobotConnectionListener((connected) => {
+    currentlyConnected = connected;
+    mainWindow.webContents.send("robot-connection-update", connected);
+    //secondaryWindow.webContents.send("robot-connection-update", connected);
+  }, true);
+  /*ntcore.createTopic("/Tests/Status", NetworkTablesTypeInfos.kString).subscribe(value => secondaryWindow.webContents.send("test-status", value), true);
 
   let list = ntcore.createTopic("/Tests/List", NetworkTablesTypeInfos.kStringArray);
   let testList = null
