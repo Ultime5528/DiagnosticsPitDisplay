@@ -1,5 +1,5 @@
 // connect ripple effect to sidebar buttons
-document.querySelectorAll('.sidebar-menu-item').forEach((button) => {
+document.querySelectorAll('.ripple-button').forEach((button) => {
     button.addEventListener('click', (e) => {
         const ripple = document.createElement('div');
 

@@ -24,10 +24,12 @@ body {
     text-decoration: none;
     transition: 0.2s linear background-color;
     background-color: rgb(40, 40, 40);
-    cursor: pointer;
+}
 
+.ripple-button {
     position: relative;
     overflow: hidden;
+    cursor: pointer;
 }
 
 .sidebar-menu-item.active {

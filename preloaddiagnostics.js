@@ -39,3 +39,8 @@ ipcRenderer.on("robot-connection-update", (_, connected) => {
 
     lastConnected = connected;
 })
+ipcRenderer.invoke("receive-topic-value-updates", "/Diagnostics/Drivetrain/Faults", "kStringArray").then(console.log)
+
+ipcRenderer.on("topic-value-update", (_, topic, value) => {
+    console.log("Topic value update", topic, value);
+})

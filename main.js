@@ -53,6 +53,28 @@ function createWindow () {
     mainWindow.webContents.send("robot-connection-update", connected);
     //secondaryWindow.webContents.send("robot-connection-update", connected);
   }, true);
+
+  let topics = {}
+  const registerTopic = (topic, topicType) => {
+    topics[topic] = [ntcore.createTopic(topic, NetworkTablesTypeInfos[topicType]), false];
+    topics[topic][0].subscribe((value) => {
+      if(topics[topic][1] === true) {
+        mainWindow.webContents.send("topic-value-update", topic, value);
+        //secondaryWindow.webContents.send("topic-value-update", topic, value);
+      }
+    }, true);
+  };
+  ipcMain.handle("get-topic-value", async (_, topic, topicType) => {
+    if(topics[topic]) return topics[topic].getValue();
+    registerTopic(topic, topicType);
+    return topics[topic].getValue();
+  });
+  ipcMain.handle("receive-topic-value-updates", async (_, topic, topicType) => {
+    if(topics[topic]) return topics[topic][1] = true;
+    else registerTopic(topic, topicType);
+
+    return topics[topic][1] = true;
+  });
   /*ntcore.createTopic("/Tests/Status", NetworkTablesTypeInfos.kString).subscribe(value => secondaryWindow.webContents.send("test-status", value), true);
 
   let list = ntcore.createTopic("/Tests/List", NetworkTablesTypeInfos.kStringArray);
