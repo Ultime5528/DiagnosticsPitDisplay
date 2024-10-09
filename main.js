@@ -7,8 +7,8 @@ const { NetworkTables, NetworkTablesTypeInfos } = require('@first-team-339/ntcor
 
 function createWindow () {
   const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1200,
+    height: 800,
     webPreferences: {
       preload: path.join(__dirname, 'preloaddiagnostics.js')
     },
@@ -46,7 +46,8 @@ function createWindow () {
   ipcMain.on("enter-fullscreen", () => secondaryWindow.setFullScreen(true));*/
 
   const ntcore = DEBUG ? NetworkTables.getInstanceByURI("127.0.0.1") : NetworkTables.getInstanceByTeam(TEAM_NUMBER)
-  ipcMain.handle("is-robot-connected", async () => !ntcore.isRobotConnecting() && ntcore.isRobotConnected())
+  const isConnected = () => !ntcore.isRobotConnecting() && ntcore.isRobotConnected();
+  ipcMain.handle("is-robot-connected", isConnected)
   
   ntcore.addRobotConnectionListener((connected) => {
     currentlyConnected = connected;
@@ -55,9 +56,10 @@ function createWindow () {
   }, true);
 
   let topics = {}
-  const registerTopic = (topic, topicType) => {
+  const registerTopic = (topic, topicType, callbackFirstValue) => {
     topics[topic] = [ntcore.createTopic(topic, NetworkTablesTypeInfos[topicType]), false];
     topics[topic][0].subscribe((value) => {
+      if(value !== null && callbackFirstValue) { callbackFirstValue(value); callbackFirstValue = null; };
       if(topics[topic][1] === true) {
         mainWindow.webContents.send("topic-value-update", topic, value);
         //secondaryWindow.webContents.send("topic-value-update", topic, value);
@@ -65,9 +67,11 @@ function createWindow () {
     }, true);
   };
   ipcMain.handle("get-topic-value", async (_, topic, topicType) => {
-    if(topics[topic]) return topics[topic].getValue();
-    registerTopic(topic, topicType);
-    return topics[topic].getValue();
+    if(!isConnected()) return null;
+    if(topics[topic]) return topics[topic][0].getValue();
+    return await new Promise((resolve) => {
+      registerTopic(topic, topicType, resolve);
+    });
   });
   ipcMain.handle("receive-topic-value-updates", async (_, topic, topicType) => {
     if(topics[topic]) return topics[topic][1] = true;
@@ -75,23 +79,6 @@ function createWindow () {
 
     return topics[topic][1] = true;
   });
-  /*ntcore.createTopic("/Tests/Status", NetworkTablesTypeInfos.kString).subscribe(value => secondaryWindow.webContents.send("test-status", value), true);
-
-  let list = ntcore.createTopic("/Tests/List", NetworkTablesTypeInfos.kStringArray);
-  let testList = null
-  list.subscribe((value) => {
-    testList = value;
-    if(value) secondaryWindow.webContents.send("test-list", value);
-  }, true);
-  ipcMain.handle("get-test-list", () => testList);
-
-  ipcMain.handle("notify-test-update", async (_, test) => {
-    console.log("Subscribing to test", test);
-    ntcore.createTopic(`/Tests/${test}/Status`, NetworkTablesTypeInfos.kString).subscribe(value => {
-      console.log("Test update", test, value);
-      secondaryWindow.webContents.send("test-status-update", test, value);
-    }, true);
-  });*/
 }
 
 app.whenReady().then(() => {

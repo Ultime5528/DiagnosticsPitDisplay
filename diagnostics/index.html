@@ -18,7 +18,7 @@
 <body>
     <div class="sidebar">
         <div class="sidebar-menu">
-            <div class="sidebar-menu-item active ripple-button" title="Home" id="home-sidebar-btn">
+            <div class="sidebar-menu-item ripple-button" title="Home" id="home-sidebar-btn">
                 <span class="material-symbols-outlined">home</span>
             </div>
             <div class="sidebar-menu-item ripple-button" title="Diagnostics" id="diagnostics-sidebar-btn">
@@ -30,21 +30,48 @@
         </div>
     </div>
     <div class="page">
-        <div id="home">
-            <h3 class="page-title">Acceuil</h3>
-            
+        <div id="home" style="display: none;">
+            <br><br>
+            <br><br>
+            <div class="status-message">
+                <div class="status-message-left">
+                    Sous-systèmes (Subsystems): <span id="subsystem-count">N/A</span><br>
+                    Problèmes (Faults): <span id="fault-count">N/A</span>
+                </div>
+                <div class="status-message-right">
+                    Sous-systèmes fautifs (Faulty subsystems): <span id="faulty-subsystem-count">N/A</span><br>
+                    Voltage de la Batterie (Battery Voltage): <span id="battery-voltage-count">N/A</span>
+                </div>
+            </div>
+            <div class="home-graphs">
+                <div class="battery-voltage">
+                    <h3>Voltage de la batterie (Battery Voltage)</h3>
+                    <canvas id="battery-voltage-chart"></canvas>
+                </div>
+                <div class="faults-subsystems">
+                    <h3>Problèmes par sous-système (Faults by subsystem)</h3>
+                    <canvas id="faults-subsystems-chart"></canvas>
+                </div>
+            </div>
         </div>
         <div id="diagnostics" style="display: none;">
             <h3 class="page-title">Diagnostics</h3>
+            <h3 id="nofaults" style="color: white; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);">Pas de problèmes (No faults)</h3>
+            <div id="faults" class="problems">
+                
+            </div>
+            <div id="clearfaults" class="button" style="display: none; text-align: center; margin: 10px; border-radius: 10px;">Effacer les problèmes (Clear faults)</div>
         </div>
         <div id="checks" style="display: none;">
             <h3 class="page-title">Checks</h3>
         </div>
+        <br>
     </div>
     <div class="bottombar">
         <div id="robot-status" class="loading">
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="main.js"></script>
 </body>
 </html>

@@ -15,10 +15,24 @@ const EventMock = () => {
 let [connectEvent, dispatchConnectEvent] = EventMock();
 let [disconnectEvent, dispatchDisconnectEvent] = EventMock();
 
+
+let topicValueUpdateListeners = {};
 // Expose some APIs to be used in the renderer process
 contextBridge.exposeInMainWorld("robot", {
     onConnect: connectEvent,
     onDisconnect: disconnectEvent,
+    getTopicUpdateEvent: (topic, type) => {
+        if(!topicValueUpdateListeners[topic]) {
+            topicValueUpdateListeners[topic] = EventMock();
+            ipcRenderer.invoke("receive-topic-value-updates", topic, type)
+            return topicValueUpdateListeners[topic][0];
+        }
+
+        return topicValueUpdateListeners[topic][0];
+    },
+    getNetworkTablesValue: async (key, type) => {
+        return await ipcRenderer.invoke("get-topic-value", key, type);
+    },
     isConnected: () => lastConnected,
 })
 
@@ -39,8 +53,10 @@ ipcRenderer.on("robot-connection-update", (_, connected) => {
 
     lastConnected = connected;
 })
-ipcRenderer.invoke("receive-topic-value-updates", "/Diagnostics/Drivetrain/Faults", "kStringArray").then(console.log)
 
+// Receive topic value updates
 ipcRenderer.on("topic-value-update", (_, topic, value) => {
-    console.log("Topic value update", topic, value);
+    if(topicValueUpdateListeners[topic]) {
+        topicValueUpdateListeners[topic][1](value);
+    }
 })
