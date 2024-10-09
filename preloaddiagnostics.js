@@ -1,4 +1,4 @@
-const { ipcRenderer, contextBridge } = require('electron')
+const { ipcRenderer, contextBridge } = require('electron');
 
 // Event Class that does exactly what we need.
 const EventMock = () => {
@@ -29,6 +29,9 @@ contextBridge.exposeInMainWorld("robot", {
         }
 
         return topicValueUpdateListeners[topic][0];
+    },
+    setNetworkTablesValue: async (key, type, value) => {
+        return await ipcRenderer.invoke("set-topic-value", key, type, value);
     },
     getNetworkTablesValue: async (key, type) => {
         return await ipcRenderer.invoke("get-topic-value", key, type);

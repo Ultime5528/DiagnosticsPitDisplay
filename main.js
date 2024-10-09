@@ -57,21 +57,34 @@ function createWindow () {
 
   let topics = {}
   const registerTopic = (topic, topicType, callbackFirstValue) => {
-    topics[topic] = [ntcore.createTopic(topic, NetworkTablesTypeInfos[topicType]), false];
-    topics[topic][0].subscribe((value) => {
-      if(value !== null && callbackFirstValue) { callbackFirstValue(value); callbackFirstValue = null; };
-      if(topics[topic][1] === true) {
-        mainWindow.webContents.send("topic-value-update", topic, value);
-        //secondaryWindow.webContents.send("topic-value-update", topic, value);
-      }
-    }, true);
+    return new Promise((resolve) => {
+      topics[topic] = [ntcore.createTopic(topic, NetworkTablesTypeInfos[topicType]), false];
+      let first = true;
+      topics[topic][0].publish();
+      topics[topic][0].subscribe((value) => {
+        if(value !== null && first) {
+          if(callbackFirstValue) callbackFirstValue(value);
+
+          resolve(value);
+          first = false;
+        }
+        if(topics[topic][1] === true) {
+          mainWindow.webContents.send("topic-value-update", topic, value);
+          //secondaryWindow.webContents.send("topic-value-update", topic, value);
+        }
+      }, true);
+    });
   };
   ipcMain.handle("get-topic-value", async (_, topic, topicType) => {
     if(!isConnected()) return null;
     if(topics[topic]) return topics[topic][0].getValue();
-    return await new Promise((resolve) => {
-      registerTopic(topic, topicType, resolve);
-    });
+    return await registerTopic(topic, topicType);
+  });
+  ipcMain.handle("set-topic-value", async (_, topic, type, value) => {
+    if(!isConnected()) return null;
+    if(!topics[topic]) await registerTopic(topic, type);
+    
+    topics[topic][0].setValue(value);
   });
   ipcMain.handle("receive-topic-value-updates", async (_, topic, topicType) => {
     if(topics[topic]) return topics[topic][1] = true;

@@ -91,9 +91,10 @@ const createFaultElement = (fault) => {
 }
 
 // Add charts
-let SubsystemList = []
+let SubsystemList = [];
 let BatteryVoltage = [];
 let Faults = {};
+let SubsystemStatuses = {};
 let batteryVoltageChart = new Chart(document.getElementById("battery-voltage-chart"), {
     type: 'line',
     data: {
@@ -142,8 +143,8 @@ let faultsSubsystemChart = new Chart(document.getElementById("faults-subsystems-
         datasets: [{
             label: 'Faults',
             data: [],
-            borderColor: '#ff9999',
-            backgroundColor: "rgba(255, 153, 153, 0.5)",
+            borderColor: [], //'#ff9999' error , //#FFA500 warning
+            backgroundColor: [], //"rgba(255, 153, 153, 0.5)", error, //"rgba(255, 165, 0, 0.5)" warning
             borderWidth: 1
         }]
     },
@@ -219,6 +220,16 @@ const showChecks = () => {
     document.getElementById("checks-sidebar-btn").classList.add("active");
 }
 
+document.getElementById("clearfaults").addEventListener("click", async () => {
+    for(const subsystem of SubsystemList) {
+        await robot.setNetworkTablesValue(`/Diagnostics/Subsystems/${subsystem}/Faults`, "kStringArray", []);
+        await robot.setNetworkTablesValue(`/Diagnostics/Subsystems/${subsystem}/Status`, "kInteger", 0);
+        Faults[subsystem] = [];
+    }
+
+    document.getElementById("faults").innerHTML = "";
+});
+
 document.getElementById("home-sidebar-btn").addEventListener("click", showHome);
 document.getElementById("diagnostics-sidebar-btn").addEventListener("click", showDiagnostics);
 document.getElementById("checks-sidebar-btn").addEventListener("click", showChecks);
@@ -229,17 +240,33 @@ const onUpdateFaults = async () => {
     if(faultCount > 0) {
         document.getElementById("clearfaults").style.display = "";
         document.getElementById("nofaults").style.display = "none";
+    } else {
+        document.getElementById("clearfaults").style.display = "none";
+        document.getElementById("nofaults").style.display = "";
     }
 
     document.getElementById("fault-count").innerText = faultCount;
     document.getElementById("faulty-subsystem-count").innerText = Object.keys(Faults).filter(key => Faults[key].length > 0).length;
 
+    // change color for each subsystem on faultsSubsystemChart labels based on status
+    let borderColors = [];
+    let backgroundColors = [];
+    for(const subsystem of Object.keys(Faults)) {
+        borderColors.push(SubsystemStatuses[subsystem] === 0 ? "rgba(0,0,0,0)" : SubsystemStatuses[subsystem] === 1 ? '#FFA500' : '#ff9999');
+        backgroundColors.push(SubsystemStatuses[subsystem] === 0 ? "rgba(0,0,0,0)" : SubsystemStatuses[subsystem] === 1 ? "rgba(255, 165, 0, 0.5)" : "rgba(255, 153, 153, 0.5)");
+    }
+    console.log(borderColors);
+
     faultsSubsystemChart.data.labels = Object.keys(Faults);
+    faultsSubsystemChart.data.datasets[0].borderColor = borderColors;
+    faultsSubsystemChart.data.datasets[0].backgroundColor = backgroundColors;
     faultsSubsystemChart.data.datasets[0].data = Object.values(Faults).map(val => val.length);
     faultsSubsystemChart.update();
 }
 
 const onBatteryVoltageUpdate = (value) => {
+    if(value === null) return;
+
     BatteryVoltage = value;
 
     document.getElementById("battery-voltage-count").innerText = BatteryVoltage[BatteryVoltage.length-1];
@@ -258,26 +285,20 @@ const onConnect = async () => {
     // Acquire faults for every subsystem
     for(const subsystem of SubsystemList) {
         Faults[subsystem] = await robot.getNetworkTablesValue(`/Diagnostics/Subsystems/${subsystem}/Faults`, "kStringArray");
+        SubsystemStatuses[subsystem] = await robot.getNetworkTablesValue(`/Diagnostics/Subsystems/${subsystem}/Status`, "kInteger");
     }
-    for(const subsystem of SubsystemList) {
-        for(const fault of Faults[subsystem]) {
-            const faultData = parseFaultString(subsystem, fault);
-            document.getElementById("faults").appendChild(createFaultElement(faultData));
-        }
-    }
+    for(const subsystem of SubsystemList) for(const fault of Faults[subsystem]) document.getElementById("faults").appendChild(createFaultElement(parseFaultString(subsystem, fault)));
     onUpdateFaults();
     
     // Register fault update events for each subsystem.
     for(const subsystem of SubsystemList) {
-        robot.getTopicUpdateEvent(`/Diagnostics/Subsystems/${subsystem}/Faults`, "kStringArray").addEventListener((value) => {
+        robot.getTopicUpdateEvent(`/Diagnostics/Subsystems/${subsystem}/Faults`, "kStringArray").addEventListener(async (value) => {
             // compare the new faults with the old ones
-            let newFaults = value.filter(fault => !Faults[subsystem].includes(fault));
-            for(const fault of newFaults) {
-                const faultData = parseFaultString(subsystem, fault);
-                document.getElementById("faults").appendChild(createFaultElement(faultData));
-            }
+            SubsystemStatuses[subsystem] = await robot.getNetworkTablesValue(`/Diagnostics/Subsystems/${subsystem}/Status`, "kInteger");
 
             Faults[subsystem] = value;
+            document.getElementById("faults").innerHTML = "";
+            for(const fault of value) document.getElementById("faults").appendChild(createFaultElement(parseFaultString(subsystem, fault)));
             onUpdateFaults();
         });
     }
@@ -308,7 +329,6 @@ const onDisconnect = (first) => {
 }
 
 robot.onConnect.addEventListener(onConnect);
-
 robot.onDisconnect.addEventListener(onDisconnect);
 
 robot.isConnected() ? onConnect() : onDisconnect(true);
