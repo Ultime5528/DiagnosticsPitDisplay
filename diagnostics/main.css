@@ -239,3 +239,37 @@ body {
     font-size: 0.8em;
     color: #bbb;
 }
+
+.check {
+    background-color: rgb(50, 50, 50);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: row;
+    gap: 10px;
+}
+
+.check-title {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.check-status {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}
+
+.check-status > .button {
+    border-radius: 5px;
+}
+
+.check-status > span {
+    font-size: 2em;
+    font-weight: bold;
+}

@@ -56,18 +56,22 @@
         </div>
         <div id="diagnostics" style="display: none;">
             <h3 class="page-title">Diagnostics</h3>
-            <h3 id="nofaults" style="color: white; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);">Pas de problèmes (No faults)</h3>
+            <h3 id="loading-faults" style="color: white; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);">Chargement... (Loading...)</h3>
+            <h3 id="nofaults" style="display: none; color: white; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);">Pas de problèmes (No faults)</h3>
             <div id="faults" class="problems"></div>
             <div id="clearfaults" class="button" style="display: none; text-align: center; margin: 10px; border-radius: 10px;">Effacer les problèmes (Clear faults)</div>
         </div>
         <div id="checks" style="display: none;">
             <h3 class="page-title">Checks</h3>
+            <h3 id="loading-checks" style="color: white; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);">Chargement... (Loading...)</h3>
+            <div id="checks-list" class="problems">
+            </div>
+            <div id="run-all-checks" style="display: none; text-align: center; margin: 10px; border-radius: 10px;" class="button">Executer tous les checks (Run all checks)</div>
         </div>
         <br>
     </div>
     <div class="bottombar">
-        <div id="robot-status" class="loading">
-        </div>
+        <div id="robot-status" class="loading"></div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="main.js"></script>

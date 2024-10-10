@@ -1,5 +1,5 @@
 // connect ripple effect to sidebar buttons
-document.querySelectorAll('.button').forEach((button) => {
+const registerRippleButton = (button) => {
     button.addEventListener('click', (e) => {
         const ripple = document.createElement('div');
 
@@ -8,7 +8,7 @@ document.querySelectorAll('.button').forEach((button) => {
         ripple.style.width = ripple.style.height = `${diameter}px`;
 
         ripple.classList.add('ripple');
-        ripple.style.left = `${e.clientX + window.scrollX - button.offsetLeft - radius}px`;
+        ripple.style.left = `${e.clientX + window.scrollX - button.offsetLeft - radius - 50}px`;
         ripple.style.top = `${e.clientY + window.scrollY - button.offsetTop - radius}px`;
         button.appendChild(ripple);
 
@@ -16,27 +16,25 @@ document.querySelectorAll('.button').forEach((button) => {
             ripple.remove();
         }, 601);
     });
-});
+}
 
-// connect sidebar buttons to their respective functions
-document.querySelectorAll('.sidebar-menu-item').forEach((button) => {
-    button.addEventListener('click', (e) => {
-        const ripple = document.createElement('div');
+document.querySelectorAll('.button').forEach(registerRippleButton);
+document.querySelectorAll('.sidebar-menu-item').forEach((button) => button.addEventListener('click', (e) => {
+    const ripple = document.createElement('div');
 
-        const diameter = Math.max(button.clientWidth, button.clientHeight);
-        const radius = diameter / 2;
-        ripple.style.width = ripple.style.height = `${diameter}px`;
+    const diameter = Math.max(button.clientWidth, button.clientHeight);
+    const radius = diameter / 2;
+    ripple.style.width = ripple.style.height = `${diameter}px`;
 
-        ripple.classList.add('ripple');
-        ripple.style.left = `${e.clientX - button.offsetLeft - radius}px`;
-        ripple.style.top = `${e.clientY - button.offsetTop - radius}px`;
-        button.appendChild(ripple);
+    ripple.classList.add('ripple');
+    ripple.style.left = `${e.clientX - button.offsetLeft - radius}px`;
+    ripple.style.top = `${e.clientY - button.offsetTop - radius}px`;
+    button.appendChild(ripple);
 
-        setTimeout(() => {
-            ripple.remove();
-        }, 601);
-    });
-});
+    setTimeout(() => {
+        ripple.remove();
+    }, 601);
+}));
 
 const parseFaultString = (subsystemName, faultString) => {
     let severity = faultString[0];
@@ -90,11 +88,49 @@ const createFaultElement = (fault) => {
     return faultElement;
 }
 
+const createCheckElement = (subsystem, onStartCheck) => {
+    const checkElement = document.createElement('div');
+    checkElement.classList.add('check');
+
+    const title = document.createElement('div');
+    title.classList.add('check-title');
+    title.innerText = subsystem;
+    checkElement.appendChild(title);
+
+    const status = document.createElement('div');
+    status.classList.add('check-status');
+
+    const icon = document.createElement('span');
+    icon.classList.add('material-symbols-outlined');
+    let color = '#f4f436';
+    icon.style.color = color;
+    icon.innerText = 'pending';
+    status.appendChild(icon);
+
+    const button = document.createElement('div');
+    button.classList.add('button');
+    button.innerText = 'Executer le check (Run check)';
+    registerRippleButton(button);
+    button.addEventListener('click', onStartCheck);
+    status.appendChild(button);
+
+    checkElement.appendChild(status);
+
+    document.getElementById("checks-list").appendChild(checkElement);
+
+    return {
+        element: checkElement,
+        icon,
+        onStartCheck
+    };
+}
+
 // Add charts
 let SubsystemList = [];
 let BatteryVoltage = [];
 let Faults = {};
 let SubsystemStatuses = {};
+let ChecksSubsystemsElems = {};
 let batteryVoltageChart = new Chart(document.getElementById("battery-voltage-chart"), {
     type: 'line',
     data: {
@@ -255,7 +291,6 @@ const onUpdateFaults = async () => {
         borderColors.push(SubsystemStatuses[subsystem] === 0 ? "rgba(0,0,0,0)" : SubsystemStatuses[subsystem] === 1 ? '#FFA500' : '#ff9999');
         backgroundColors.push(SubsystemStatuses[subsystem] === 0 ? "rgba(0,0,0,0)" : SubsystemStatuses[subsystem] === 1 ? "rgba(255, 165, 0, 0.5)" : "rgba(255, 153, 153, 0.5)");
     }
-    console.log(borderColors);
 
     faultsSubsystemChart.data.labels = Object.keys(Faults);
     faultsSubsystemChart.data.datasets[0].borderColor = borderColors;
@@ -286,28 +321,57 @@ const onConnect = async () => {
     for(const subsystem of SubsystemList) {
         Faults[subsystem] = await robot.getNetworkTablesValue(`/Diagnostics/Subsystems/${subsystem}/Faults`, "kStringArray");
         SubsystemStatuses[subsystem] = await robot.getNetworkTablesValue(`/Diagnostics/Subsystems/${subsystem}/Status`, "kInteger");
-    }
-    for(const subsystem of SubsystemList) for(const fault of Faults[subsystem]) document.getElementById("faults").appendChild(createFaultElement(parseFaultString(subsystem, fault)));
-    onUpdateFaults();
-    
-    // Register fault update events for each subsystem.
-    for(const subsystem of SubsystemList) {
-        robot.getTopicUpdateEvent(`/Diagnostics/Subsystems/${subsystem}/Faults`, "kStringArray").addEventListener(async (value) => {
-            // compare the new faults with the old ones
-            SubsystemStatuses[subsystem] = await robot.getNetworkTablesValue(`/Diagnostics/Subsystems/${subsystem}/Status`, "kInteger");
 
+        // Register fault update events for each subsystem.
+        robot.getTopicUpdateEvent(`/Diagnostics/Subsystems/${subsystem}/Faults`, "kStringArray").addEventListener(async (value) => {
             Faults[subsystem] = value;
+            
             document.getElementById("faults").innerHTML = "";
             for(const fault of value) document.getElementById("faults").appendChild(createFaultElement(parseFaultString(subsystem, fault)));
             onUpdateFaults();
         });
+
+        // Create check element for each subsystem
+        ChecksSubsystemsElems[subsystem] = createCheckElement(subsystem, async () => {
+            // TODO: Implement check execution
+            console.log(`Running check for ${subsystem}`);
+        });
+
+        ChecksSubsystemsElems[subsystem].icon.innerText = SubsystemStatuses[subsystem] === 0 ? 'check' : SubsystemStatuses[subsystem] === 1 ? 'warning' : 'error_outline';
+        ChecksSubsystemsElems[subsystem].icon.style.color = SubsystemStatuses[subsystem] === 0 ? '#4CAF50' : SubsystemStatuses[subsystem] === 1 ? '#FFA500' : '#f44336';
+
+        // Register status update events for each subsystem.
+        robot.getTopicUpdateEvent(`/Diagnostics/Subsystems/${subsystem}/Status`, "kInteger").addEventListener(async (value) => {
+            SubsystemStatuses[subsystem] = value;
+            ChecksSubsystemsElems[subsystem].icon.innerText = SubsystemStatuses[subsystem] === 0 ? 'check' : SubsystemStatuses[subsystem] === 1 ? 'warning' : 'error_outline';
+            ChecksSubsystemsElems[subsystem].icon.style.color = SubsystemStatuses[subsystem] === 0 ? '#4CAF50' : SubsystemStatuses[subsystem] === 1 ? '#FFA500' : '#f44336';
+            onUpdateFaults();
+        });
     }
+
+    // Setup checks screen
+    document.getElementById("loading-checks").style.display = "none";
+    document.getElementById("run-all-checks").style.display = "";
+
+    // Create fault elements
+    for(const subsystem of SubsystemList) for(const fault of Faults[subsystem]) document.getElementById("faults").appendChild(createFaultElement(parseFaultString(subsystem, fault)));
+    
+    document.getElementById("loading-faults").style.display = "none";
+    onUpdateFaults();
+    
+    
     
     // Set bottom bar as connected
     document.getElementById("robot-status").classList.remove("loading");
     document.getElementById("robot-status").classList.remove("disconnected");
     document.getElementById("robot-status").classList.add("connected");
 }
+
+document.getElementById("run-all-checks").addEventListener("click", async () => {
+    for(const subsystem of SubsystemList) {
+        ChecksSubsystemsElems[subsystem].onStartCheck();
+    }
+});
 
 // Get initial battery voltage value
 robot.getNetworkTablesValue("/Diagnostics/BatteryVoltage", "kDoubleArray").then(onBatteryVoltageUpdate);
@@ -333,4 +397,14 @@ robot.onDisconnect.addEventListener(onDisconnect);
 
 robot.isConnected() ? onConnect() : onDisconnect(true);
 
+document.getElementById("home-sidebar-btn").style.transition = "none";
+document.getElementById("diagnostics-sidebar-btn").style.transition = "none";
+document.getElementById("checks-sidebar-btn").style.transition = "none";
+
 window.location.search.includes("home") ? showHome() : window.location.search.includes("checks") ? showChecks() : window.location.search.includes("diagnostics") ? showDiagnostics() : showHome();
+
+setTimeout(() => {
+    document.getElementById("home-sidebar-btn").style.transition = "";
+    document.getElementById("diagnostics-sidebar-btn").style.transition = "";
+    document.getElementById("checks-sidebar-btn").style.transition = "";
+}, 200)
