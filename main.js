@@ -47,16 +47,28 @@ function createWindow () {
   let topics = {}
 
   const ntcore = DEBUG ? NetworkTables.getInstanceByURI("127.0.0.1") : NetworkTables.getInstanceByTeam(TEAM_NUMBER)
+
+  // Is connected to the robot
   const isConnected = () => !ntcore.isRobotConnecting() && ntcore.isRobotConnected();
   ipcMain.handle("is-robot-connected", isConnected)
   
+  // Update the connection status
   ntcore.addRobotConnectionListener((connected) => {
     currentlyConnected = connected;
     mainWindow.webContents.send("robot-connection-update", connected);
     //secondaryWindow.webContents.send("robot-connection-update", connected);
+
+    if(!connected) {
+      for(const topic in topics) {
+        topics[topic][0].unannounce();
+        topics[topic][0].unsubscribe();
+        delete topics[topic];
+      }
+    }
   }, true);
 
   
+  // Register a topic
   const registerTopic = (topic, topicType, callbackFirstValue) => {
     return new Promise((resolve) => {
       topics[topic] = [ntcore.createTopic(topic, NetworkTablesTypeInfos[topicType]), false];
@@ -76,22 +88,34 @@ function createWindow () {
       }, true);
     });
   };
+
+  // Get a topic value
   ipcMain.handle("get-topic-value", async (_, topic, topicType) => {
     if(!isConnected()) return null;
     if(topics[topic]) return topics[topic][0].getValue();
     return await registerTopic(topic, topicType);
   });
+
+  // Set a topic value
   ipcMain.handle("set-topic-value", async (_, topic, type, value) => {
     if(!isConnected()) return null;
     if(!topics[topic]) await registerTopic(topic, type);
 
     topics[topic][0].setValue(value);
   });
+
+  // Receive topic value updates (event)
   ipcMain.handle("receive-topic-value-updates", async (_, topic, topicType) => {
     if(topics[topic]) return topics[topic][1] = true;
     else registerTopic(topic, topicType);
 
     return topics[topic][1] = true;
+  });
+
+  // Register topic
+  ipcMain.handle("register-topic", async (_, topic, type) => {
+    if(topics[topic]) return;
+    return await registerTopic(topic, type);
   });
 }
 

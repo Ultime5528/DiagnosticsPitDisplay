@@ -102,17 +102,17 @@ const createCheckElement = (subsystem, onStartCheck) => {
 
     const icon = document.createElement('span');
     icon.classList.add('material-symbols-outlined');
-    let color = '#f4f436';
+    let color = '#2196F3';
     icon.style.color = color;
     icon.innerText = 'pending';
     status.appendChild(icon);
 
-    const button = document.createElement('div');
+    /*const button = document.createElement('div');
     button.classList.add('button');
     button.innerText = 'Executer le check (Run check)';
     registerRippleButton(button);
     button.addEventListener('click', onStartCheck);
-    status.appendChild(button);
+    status.appendChild(button);*/
 
     checkElement.appendChild(status);
 
@@ -313,12 +313,24 @@ const onBatteryVoltageUpdate = (value) => {
 const onConnect = async () => {
     console.log("Robot connected");
 
+    let onIsTestUpdate = (value) => {
+        if(value) {
+            document.getElementById("robot-not-test-mode").style.display = "none";
+        } else {
+            document.getElementById("robot-not-test-mode").style.display = "";
+        }
+    }
+    robot.getTopicUpdateEvent("/Diagnostics/IsInTest", "kBoolean").addEventListener(onIsTestUpdate);
+    onIsTestUpdate(await robot.getNetworkTablesValue("/Diagnostics/IsInTest", "kBoolean"));
+
     // Acquire subsystem list
     SubsystemList = await robot.getNetworkTablesValue("/Diagnostics/SubsystemList", "kStringArray")
     document.getElementById("subsystem-count").innerText = SubsystemList.length;
     
     // Acquire faults for every subsystem
     for(const subsystem of SubsystemList) {
+        robot.registerTopic("/SmartDashboard/Diagnostics/Tests/Test"+subsystem+"/running", "kBoolean");
+
         Faults[subsystem] = await robot.getNetworkTablesValue(`/Diagnostics/Subsystems/${subsystem}/Faults`, "kStringArray");
         SubsystemStatuses[subsystem] = await robot.getNetworkTablesValue(`/Diagnostics/Subsystems/${subsystem}/Status`, "kInteger");
 
@@ -332,9 +344,31 @@ const onConnect = async () => {
         });
 
         // Create check element for each subsystem
-        ChecksSubsystemsElems[subsystem] = createCheckElement(subsystem, async () => {
-            robot.setNetworkTablesValue("/SmartDashboard/Diagnostics/Tests/Test"+subsystem+"/running", "kBoolean", true);
-            console.log(`Running check for ${subsystem}`);
+        ChecksSubsystemsElems[subsystem] = createCheckElement(subsystem, () => {
+            return new Promise(resolve => {
+                // Change icon
+                ChecksSubsystemsElems[subsystem].icon.innerText = 'autorenew';
+                ChecksSubsystemsElems[subsystem].icon.style.color = '#f4f436';
+
+                console.log(`Running check for ${subsystem}`);
+
+                // Setup
+                let topicEvent = robot.getTopicUpdateEvent("/SmartDashboard/Diagnostics/Tests/Test"+subsystem+"/running", "kBoolean")
+                let handler = (value) => {
+                    topicEvent.removeEventListener(handler);
+                    if(value === false) {
+                        resolve();
+
+                        // Change icon
+                        ChecksSubsystemsElems[subsystem].icon.innerText = SubsystemStatuses[subsystem] === 0 ? 'check' : SubsystemStatuses[subsystem] === 1 ? 'warning' : 'error_outline';
+                        ChecksSubsystemsElems[subsystem].icon.style.color = SubsystemStatuses[subsystem] === 0 ? '#4CAF50' : SubsystemStatuses[subsystem] === 1 ? '#FFA500' : '#f44336';
+                    }
+                }
+                topicEvent.addEventListener(handler);
+    
+                // Start test
+                robot.setNetworkTablesValue("/SmartDashboard/Diagnostics/Tests/Test"+subsystem+"/running", "kBoolean", true);
+            })
         });
 
         ChecksSubsystemsElems[subsystem].icon.innerText = SubsystemStatuses[subsystem] === 0 ? 'check' : SubsystemStatuses[subsystem] === 1 ? 'warning' : 'error_outline';
@@ -345,7 +379,6 @@ const onConnect = async () => {
             SubsystemStatuses[subsystem] = value;
             ChecksSubsystemsElems[subsystem].icon.innerText = SubsystemStatuses[subsystem] === 0 ? 'check' : SubsystemStatuses[subsystem] === 1 ? 'warning' : 'error_outline';
             ChecksSubsystemsElems[subsystem].icon.style.color = SubsystemStatuses[subsystem] === 0 ? '#4CAF50' : SubsystemStatuses[subsystem] === 1 ? '#FFA500' : '#f44336';
-            onUpdateFaults();
         });
     }
 
@@ -369,7 +402,11 @@ const onConnect = async () => {
 
 document.getElementById("run-all-checks").addEventListener("click", async () => {
     for(const subsystem of SubsystemList) {
-        ChecksSubsystemsElems[subsystem].onStartCheck();
+        ChecksSubsystemsElems[subsystem].icon.innerText = 'pending';
+        ChecksSubsystemsElems[subsystem].icon.style.color = '#2196F3';
+    }
+    for(const subsystem of SubsystemList) {
+        await ChecksSubsystemsElems[subsystem].onStartCheck();
     }
 });
 

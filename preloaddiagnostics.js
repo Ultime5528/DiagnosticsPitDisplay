@@ -45,6 +45,9 @@ contextBridge.exposeInMainWorld("robot", {
     getNetworkTablesValue: async (key, type) => {
         return await ipcRenderer.invoke("get-topic-value", key, type);
     },
+    registerTopic: async (key, type) => {
+        return await ipcRenderer.invoke("register-topic", key, type);
+    },
     isConnected: () => lastConnected,
 })
 
