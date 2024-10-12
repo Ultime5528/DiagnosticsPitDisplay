@@ -44,6 +44,7 @@ function createWindow () {
 
   ipcMain.on("exit-fullscreen", () => secondaryWindow.setFullScreen(false));
   ipcMain.on("enter-fullscreen", () => secondaryWindow.setFullScreen(true));*/
+  let topics = {}
 
   const ntcore = DEBUG ? NetworkTables.getInstanceByURI("127.0.0.1") : NetworkTables.getInstanceByTeam(TEAM_NUMBER)
   const isConnected = () => !ntcore.isRobotConnecting() && ntcore.isRobotConnected();
@@ -55,7 +56,7 @@ function createWindow () {
     //secondaryWindow.webContents.send("robot-connection-update", connected);
   }, true);
 
-  let topics = {}
+  
   const registerTopic = (topic, topicType, callbackFirstValue) => {
     return new Promise((resolve) => {
       topics[topic] = [ntcore.createTopic(topic, NetworkTablesTypeInfos[topicType]), false];
@@ -83,7 +84,7 @@ function createWindow () {
   ipcMain.handle("set-topic-value", async (_, topic, type, value) => {
     if(!isConnected()) return null;
     if(!topics[topic]) await registerTopic(topic, type);
-    
+
     topics[topic][0].setValue(value);
   });
   ipcMain.handle("receive-topic-value-updates", async (_, topic, topicType) => {

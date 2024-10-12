@@ -4,11 +4,20 @@ const { ipcRenderer, contextBridge } = require('electron');
 const EventMock = () => {
     let listeners = [];
 
-    return [{
+    let self = {
         addEventListener: (listener) => listeners.push(listener),
         removeEventListener: (listener) => listeners = listeners.filter(l => l !== listener),
-        
-    }, (...args) => listeners.forEach(l => l(...args))]
+        handleOnce: (listener) => {
+            let handler = (...args) => {
+                listener(...args);
+                self.removeEventListener(handler);
+            }
+
+            self.addEventListener(handler)
+        }
+    }
+
+    return [self, (...args) => listeners.forEach(l => l(...args))]
 }
 
 // Create some events
@@ -59,7 +68,5 @@ ipcRenderer.on("robot-connection-update", (_, connected) => {
 
 // Receive topic value updates
 ipcRenderer.on("topic-value-update", (_, topic, value) => {
-    if(topicValueUpdateListeners[topic]) {
-        topicValueUpdateListeners[topic][1](value);
-    }
+    if(topicValueUpdateListeners[topic]) topicValueUpdateListeners[topic][1](value);
 })

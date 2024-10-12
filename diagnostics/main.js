@@ -333,7 +333,7 @@ const onConnect = async () => {
 
         // Create check element for each subsystem
         ChecksSubsystemsElems[subsystem] = createCheckElement(subsystem, async () => {
-            // TODO: Implement check execution
+            robot.setNetworkTablesValue("/SmartDashboard/Diagnostics/Tests/Test"+subsystem+"/running", "kBoolean", true);
             console.log(`Running check for ${subsystem}`);
         });
 
