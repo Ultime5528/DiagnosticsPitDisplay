@@ -45,7 +45,7 @@ function createWindow () {
   ipcMain.on("exit-fullscreen", () => secondaryWindow.setFullScreen(false));
   ipcMain.on("enter-fullscreen", () => secondaryWindow.setFullScreen(true));
 
-  let topics = {}
+  /*let topics = {}
 
   const ntcore = DEBUG ? NetworkTables.getInstanceByURI("127.0.0.1") : NetworkTables.getInstanceByTeam(TEAM_NUMBER)
 
@@ -117,7 +117,7 @@ function createWindow () {
   ipcMain.handle("register-topic", async (_, topic, type) => {
     if(topics[topic]) return;
     return await registerTopic(topic, type);
-  });
+  });*/
 }
 
 app.whenReady().then(() => {
