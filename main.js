@@ -10,40 +10,41 @@ function createWindow () {
     width: 1200,
     height: 800,
     webPreferences: {
-      preload: path.join(__dirname, 'preloaddiagnostics.js')
+      preload: path.join(__dirname, 'preload.js')
     },
     maximize: true,
     title: "Ultime 5528 - System Diagnostics",
-    icon: path.join(__dirname, 'www', 'assets', 'img', 'icon.png'),
+    icon: path.join(__dirname, 'icon.png'),
   })
 
   mainWindow.setMenu(null)
-  mainWindow.loadFile('diagnostics/index.html')
-  mainWindow.webContents.openDevTools();
+  mainWindow.loadFile('main/index.html')
+  // mainWindow.webContents.openDevTools();
 
-  /*const secondaryWindow = new BrowserWindow({
+  const secondaryWindow = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'preloadsecond.js'),
     },
     fullscreenable: true,
     maximize: true,
     title: "Ultime 5528 - System Diagnostics",
-    icon: path.join(__dirname, 'www', 'assets', 'img', 'icon.png')
+    icon: path.join(__dirname, 'icon.png')
   });
 
   
 
   secondaryWindow.setMenu(null)
-  secondaryWindow.loadFile('www/index.html')
+  secondaryWindow.loadFile('second/index.html')
   secondaryWindow.webContents.openDevTools();
 
   secondaryWindow.on("enter-full-screen", () => secondaryWindow.webContents.send("fullscreen-update", true));
   secondaryWindow.on("leave-full-screen", () => secondaryWindow.webContents.send("fullscreen-update", false));
 
   ipcMain.on("exit-fullscreen", () => secondaryWindow.setFullScreen(false));
-  ipcMain.on("enter-fullscreen", () => secondaryWindow.setFullScreen(true));*/
+  ipcMain.on("enter-fullscreen", () => secondaryWindow.setFullScreen(true));
+
   let topics = {}
 
   const ntcore = DEBUG ? NetworkTables.getInstanceByURI("127.0.0.1") : NetworkTables.getInstanceByTeam(TEAM_NUMBER)
@@ -56,7 +57,7 @@ function createWindow () {
   ntcore.addRobotConnectionListener((connected) => {
     currentlyConnected = connected;
     mainWindow.webContents.send("robot-connection-update", connected);
-    //secondaryWindow.webContents.send("robot-connection-update", connected);
+    secondaryWindow.webContents.send("robot-connection-update", connected);
 
     if(!connected) {
       for(const topic in topics) {
@@ -83,7 +84,7 @@ function createWindow () {
         }
         if(topics[topic][1] === true) {
           mainWindow.webContents.send("topic-value-update", topic, value);
-          //secondaryWindow.webContents.send("topic-value-update", topic, value);
+          secondaryWindow.webContents.send("topic-value-update", topic, value);
         }
       }, true);
     });

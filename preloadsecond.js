@@ -1,4 +1,4 @@
-const { ipcRenderer, contextBridge } = require('electron');
+const { ipcRenderer, contextBridge } = require('electron')
 
 // Event Class that does exactly what we need.
 const EventMock = () => {
@@ -73,3 +73,40 @@ ipcRenderer.on("robot-connection-update", (_, connected) => {
 ipcRenderer.on("topic-value-update", (_, topic, value) => {
     if(topicValueUpdateListeners[topic]) topicValueUpdateListeners[topic][1](value);
 })
+
+// Fullscreen handling
+document.addEventListener('DOMContentLoaded', () => {
+    let fullscreen = false;
+
+    ipcRenderer.on("fullscreen-update", (_, state) => {
+        fullscreen = state;
+        updateFullScreenIcon();
+    });
+
+    const updateFullScreenIcon = () => {
+        if(fullscreen) {
+            document.querySelector("#fullscreen > span").innerText = "fullscreen_exit";
+        } else {
+            document.querySelector("#fullscreen > span").innerText = "fullscreen";
+        }
+    }
+
+    document.getElementById('fullscreen').addEventListener('click', () => {
+        if(fullscreen) 
+            ipcRenderer.send('exit-fullscreen');
+        else
+            ipcRenderer.send('enter-fullscreen');
+    });
+
+    updateFullScreenIcon();
+});
+
+// Hide cursor when idle on page
+let idleTimeout;
+document.addEventListener('mousemove', () => {
+    document.body.style.cursor = "auto";
+    clearTimeout(idleTimeout);
+    idleTimeout = setTimeout(() => {
+        document.body.style.cursor = "none";
+    }, 1500);
+});
