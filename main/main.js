@@ -258,8 +258,8 @@ const showChecks = () => {
 
 document.getElementById("clearfaults").addEventListener("click", async () => {
     for(const subsystem of SubsystemList) {
-        await robot.setNetworkTablesValue(`/Diagnostics/Subsystems/${subsystem}/Faults`, "kStringArray", []);
-        await robot.setNetworkTablesValue(`/Diagnostics/Subsystems/${subsystem}/Status`, "kInteger", 0);
+        await robot.setNetworkTablesValue(`/Diagnostics/Subsystems/${subsystem}/Faults`, []);
+        await robot.setNetworkTablesValue(`/Diagnostics/Subsystems/${subsystem}/Status`, parseInt(0));
         Faults[subsystem] = [];
     }
 
@@ -320,22 +320,20 @@ const onConnect = async () => {
             document.getElementById("robot-not-test-mode").style.display = "";
         }
     }
-    robot.getTopicUpdateEvent("/Diagnostics/IsInTest", "kBoolean").addEventListener(onIsTestUpdate);
-    onIsTestUpdate(await robot.getNetworkTablesValue("/Diagnostics/IsInTest", "kBoolean"));
+    robot.getTopicUpdateEvent("/Diagnostics/IsInTest").addEventListener(onIsTestUpdate);
+    onIsTestUpdate(await robot.getNetworkTablesValue("/Diagnostics/IsInTest"));
 
     // Acquire subsystem list
-    SubsystemList = await robot.getNetworkTablesValue("/Diagnostics/SubsystemList", "kStringArray")
+    SubsystemList = await robot.getNetworkTablesValue("/Diagnostics/SubsystemList")
     document.getElementById("subsystem-count").innerText = SubsystemList.length;
     
     // Acquire faults for every subsystem
     for(const subsystem of SubsystemList) {
-        robot.registerTopic("/SmartDashboard/Diagnostics/Tests/Test"+subsystem+"/running", "kBoolean");
-
-        Faults[subsystem] = await robot.getNetworkTablesValue(`/Diagnostics/Subsystems/${subsystem}/Faults`, "kStringArray");
-        SubsystemStatuses[subsystem] = await robot.getNetworkTablesValue(`/Diagnostics/Subsystems/${subsystem}/Status`, "kInteger");
+        Faults[subsystem] = await robot.getNetworkTablesValue(`/Diagnostics/Subsystems/${subsystem}/Faults`);
+        SubsystemStatuses[subsystem] = await robot.getNetworkTablesValue(`/Diagnostics/Subsystems/${subsystem}/Status`);
 
         // Register fault update events for each subsystem.
-        robot.getTopicUpdateEvent(`/Diagnostics/Subsystems/${subsystem}/Faults`, "kStringArray").addEventListener(async (value) => {
+        robot.getTopicUpdateEvent(`/Diagnostics/Subsystems/${subsystem}/Faults`).addEventListener(async (value) => {
             Faults[subsystem] = value;
             
             document.getElementById("faults").innerHTML = "";
@@ -345,40 +343,39 @@ const onConnect = async () => {
 
         // Create check element for each subsystem
         ChecksSubsystemsElems[subsystem] = createCheckElement(subsystem, () => {
-            return new Promise(resolve => {
-                // Change icon
-                ChecksSubsystemsElems[subsystem].icon.innerText = 'autorenew';
-                ChecksSubsystemsElems[subsystem].icon.style.color = '#f4f436';
-
+            return new Promise(async resolve => {
                 console.log(`Running check for ${subsystem}`);
 
                 // Setup
-                let topicEvent = robot.getTopicUpdateEvent("/SmartDashboard/Diagnostics/Tests/Test"+subsystem+"/running", "kBoolean")
-                let handler = (value) => {
+                await robot.setNetworkTablesValue("/Diagnostics/Subsystems/"+subsystem+"/Status", 3);
+                let topicEvent = robot.getTopicUpdateEvent("/SmartDashboard/Diagnostics/Tests/Test"+subsystem+"/running")
+                let handler = async (value) => {
                     topicEvent.removeEventListener(handler);
                     if(value === false) {
                         resolve();
-
-                        // Change icon
-                        ChecksSubsystemsElems[subsystem].icon.innerText = SubsystemStatuses[subsystem] === 0 ? 'check' : SubsystemStatuses[subsystem] === 1 ? 'warning' : 'error_outline';
-                        ChecksSubsystemsElems[subsystem].icon.style.color = SubsystemStatuses[subsystem] === 0 ? '#4CAF50' : SubsystemStatuses[subsystem] === 1 ? '#FFA500' : '#f44336';
+                        let highestSeverity = 0;
+                        for(const fault of Faults[subsystem]) {
+                            let severity = parseFaultString(subsystem, fault).warning ? 1 : 2;
+                            if(severity > highestSeverity) highestSeverity = severity;
+                        }
+                        if(SubsystemStatuses[subsystem] === 3) await robot.setNetworkTablesValue("/Diagnostics/Subsystems/"+subsystem+"/Status", highestSeverity);
                     }
                 }
                 topicEvent.addEventListener(handler);
     
                 // Start test
-                robot.setNetworkTablesValue("/SmartDashboard/Diagnostics/Tests/Test"+subsystem+"/running", "kBoolean", true);
+                robot.setNetworkTablesValue("/SmartDashboard/Diagnostics/Tests/Test"+subsystem+"/running", true);
             })
         });
 
-        ChecksSubsystemsElems[subsystem].icon.innerText = SubsystemStatuses[subsystem] === 0 ? 'check' : SubsystemStatuses[subsystem] === 1 ? 'warning' : 'error_outline';
-        ChecksSubsystemsElems[subsystem].icon.style.color = SubsystemStatuses[subsystem] === 0 ? '#4CAF50' : SubsystemStatuses[subsystem] === 1 ? '#FFA500' : '#f44336';
+        ChecksSubsystemsElems[subsystem].icon.innerText = SubsystemStatuses[subsystem] === 0 ? 'check' : SubsystemStatuses[subsystem] === 1 ? 'warning' : SubsystemStatuses[subsystem] === 2 ? "error_outline" : 'autorenew';
+        ChecksSubsystemsElems[subsystem].icon.style.color = SubsystemStatuses[subsystem] === 0 ? '#4CAF50' : SubsystemStatuses[subsystem] === 1 ? '#FFA500' : SubsystemStatuses[subsystem] === 2 ? "#f44336" : '#f4f436';
 
         // Register status update events for each subsystem.
-        robot.getTopicUpdateEvent(`/Diagnostics/Subsystems/${subsystem}/Status`, "kInteger").addEventListener(async (value) => {
+        robot.getTopicUpdateEvent(`/Diagnostics/Subsystems/${subsystem}/Status`).addEventListener(async (value) => {
             SubsystemStatuses[subsystem] = value;
-            ChecksSubsystemsElems[subsystem].icon.innerText = SubsystemStatuses[subsystem] === 0 ? 'check' : SubsystemStatuses[subsystem] === 1 ? 'warning' : 'error_outline';
-            ChecksSubsystemsElems[subsystem].icon.style.color = SubsystemStatuses[subsystem] === 0 ? '#4CAF50' : SubsystemStatuses[subsystem] === 1 ? '#FFA500' : '#f44336';
+            ChecksSubsystemsElems[subsystem].icon.innerText = SubsystemStatuses[subsystem] === 0 ? 'check' : SubsystemStatuses[subsystem] === 1 ? 'warning' : SubsystemStatuses[subsystem] === 2 ? "error_outline" : 'autorenew';
+        ChecksSubsystemsElems[subsystem].icon.style.color = SubsystemStatuses[subsystem] === 0 ? '#4CAF50' : SubsystemStatuses[subsystem] === 1 ? '#FFA500' : SubsystemStatuses[subsystem] === 2 ? "#f44336" : '#f4f436';
         });
     }
 
@@ -399,8 +396,11 @@ const onConnect = async () => {
     document.getElementById("robot-status").classList.remove("disconnected");
     document.getElementById("robot-status").classList.add("connected");
 }
-
+let runningTests = false;
 document.getElementById("run-all-checks").addEventListener("click", async () => {
+    if(runningTests) return;
+    document.getElementById("run-all-checks").disabled = true;
+    runningTests = true;
     for(const subsystem of SubsystemList) {
         ChecksSubsystemsElems[subsystem].icon.innerText = 'pending';
         ChecksSubsystemsElems[subsystem].icon.style.color = '#2196F3';
@@ -408,13 +408,15 @@ document.getElementById("run-all-checks").addEventListener("click", async () => 
     for(const subsystem of SubsystemList) {
         await ChecksSubsystemsElems[subsystem].onStartCheck();
     }
+    runningTests = false;
+    document.getElementById("run-all-checks").disabled = false;
 });
 
 // Get initial battery voltage value
-robot.getNetworkTablesValue("/Diagnostics/BatteryVoltage", "kDoubleArray").then(onBatteryVoltageUpdate);
+robot.getNetworkTablesValue("/Diagnostics/BatteryVoltage").then(onBatteryVoltageUpdate);
 
 // Update battery graph every time the battery voltage history changes
-robot.getTopicUpdateEvent("/Diagnostics/BatteryVoltage", "kDoubleArray").addEventListener((value) => {
+robot.getTopicUpdateEvent("/Diagnostics/BatteryVoltage").addEventListener((value) => {
     onBatteryVoltageUpdate(value);
 });
 

@@ -150,7 +150,6 @@ let tests = {};
 
 const onConnect = () => {
     console.log("Robot connected");
-    if(robot.getCurrentTestState() !== "waiting") return;
     showConnected();
 };
 
@@ -165,41 +164,6 @@ robot.onConnect.addEventListener(onConnect);
 robot.onDisconnect.addEventListener(onDisconnect);
 
 robot.isConnected() ? onConnect() : onDisconnect();
-
-robot.onTestsUpdate.addEventListener((status) => {
-    console.log("Tests update: " + status);
-    if(status === "waiting") {
-        showConnected();
-    } else if(status === "initializing") {
-        showInitializing();
-    } else if(status === "running") {
-        showRunning();
-    } else if(status === "success") {
-        showSuccess();
-    } else if(status === "failed") {
-        // TODO: show what failed specifically in each subsystem.
-    }
-});
-
-
-robot.onReceiveTestList.addEventListener((testList) => {
-    Object.values(tests).forEach(test => test.destroy());
-    tests = {};
-    console.log("Received test list: ", testList);
-    testList.forEach(test => {
-        let task = new Test(test);
-        tests[test] = task;
-        task.setState("waiting");
-        robot.subscribeTestUpdate(test, (status) => {
-            task.setState(status);
-        });
-    });
-});
-
-robot.onTestUpdate.addEventListener((test, status) => {
-    console.log("Test update: ", test, status);
-    tests[test].setState(status);
-});
 
 /*
 let task1 = new Test("Test 1");

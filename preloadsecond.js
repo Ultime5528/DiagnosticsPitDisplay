@@ -1,4 +1,4 @@
-const { ipcRenderer, contextBridge } = require('electron')
+const { ipcRenderer, contextBridge } = require('electron');
 
 // Event Class that does exactly what we need.
 const EventMock = () => {
@@ -24,29 +24,24 @@ const EventMock = () => {
 let [connectEvent, dispatchConnectEvent] = EventMock();
 let [disconnectEvent, dispatchDisconnectEvent] = EventMock();
 
-
 let topicValueUpdateListeners = {};
 // Expose some APIs to be used in the renderer process
 contextBridge.exposeInMainWorld("robot", {
     onConnect: connectEvent,
     onDisconnect: disconnectEvent,
-    getTopicUpdateEvent: (topic, type) => {
+    getTopicUpdateEvent: (topic) => {
         if(!topicValueUpdateListeners[topic]) {
             topicValueUpdateListeners[topic] = EventMock();
-            ipcRenderer.invoke("receive-topic-value-updates", topic, type)
             return topicValueUpdateListeners[topic][0];
         }
 
         return topicValueUpdateListeners[topic][0];
     },
-    setNetworkTablesValue: async (key, type, value) => {
-        return await ipcRenderer.invoke("set-topic-value", key, type, value);
+    setNetworkTablesValue: async (key, value) => {
+        return await ipcRenderer.invoke("set-topic-value", key, value);
     },
     getNetworkTablesValue: async (key, type) => {
-        return await ipcRenderer.invoke("get-topic-value", key, type);
-    },
-    registerTopic: async (key, type) => {
-        return await ipcRenderer.invoke("register-topic", key, type);
+        return await ipcRenderer.invoke("get-topic-value", key);
     },
     isConnected: () => lastConnected,
 })
