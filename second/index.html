@@ -29,11 +29,11 @@
         </span>
         <h1>En attente du démarrage des tests<br><small>(Waiting for tests)</small></h1>
     </div>
-    <div class="initializing-tests" id="initializing-tests" style="opacity: 0;">
+    <div class="robot-connected" id="robot-connected" style="opacity: 0;">
         <span class="material-symbols-outlined">
-            autorenew
+            check
         </span>
-        <h1>Initialisation des tests<br><small>(Initializing tests)</small></h1>
+        <h1>Robot connecté<br><small>(Robot connected)</small></h1>
     </div>
     <div class="running-tests" id="running-tests" style="opacity: 0;">
         <table>
@@ -58,18 +58,7 @@
         <span class="material-symbols-outlined">
             error
         </span>
-        <h1>Problème(s) détecté<br><small>(Problem(s) detected)</small></h1>
-        <table>
-            <thead>
-                <tr>
-                    <th>Nom du sous-système<br><small>(Subsystem Name)</small></th>
-                    <th>Status du test<br><small>(Test Status)</small></th>
-                    <th>Temps écoulé<br><small>(Time Elapsed)</small></th>
-                </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
+        <h1>Quelques tests ont échoués<br><small>(Some tests have failed)</small></h1>
     </div>
     <script src="main.js"></script>
 </body>

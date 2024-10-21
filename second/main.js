@@ -6,32 +6,35 @@ const showNoRobot = () => {
         document.getElementById("no-robot-prompt").style.opacity = 1;
     }, 200);
     document.getElementById("waiting-tests-prompt").style.opacity = 0;
-    document.getElementById("initializing-tests").style.opacity = 0;
+    document.getElementById("robot-connected").style.opacity = 0;
     document.getElementById("running-tests").style.opacity = 0;
     document.getElementById("tests-success").style.opacity = 0;
+    document.getElementById("tests-failure").style.opacity = 0;
 }
 
-const showConnected = () => {
+const showWaiting = () => {
     clearTimeout(animationTimeout);
     animationTimeout = setTimeout(() => {
         document.getElementById("waiting-tests-prompt").style.opacity = 1;
     }, 200);
     document.getElementById("no-robot-prompt").style.opacity = 0;
-    document.getElementById("initializing-tests").style.opacity = 0;
+    document.getElementById("robot-connected").style.opacity = 0;
     document.getElementById("running-tests").style.opacity = 0;
     document.getElementById("tests-success").style.opacity = 0;
+    document.getElementById("tests-failure").style.opacity = 0;
 }
 
-const showInitializing = () => {
+const showConnected = () => {
     clearTimeout(animationTimeout);
     animationTimeout = setTimeout(() => {
-        document.getElementById("initializing-tests").style.opacity = 1;
-        
+        document.getElementById("robot-connected").style.opacity = 1;
+
     }, 200);
     document.getElementById("waiting-tests-prompt").style.opacity = 0;
     document.getElementById("no-robot-prompt").style.opacity = 0;
     document.getElementById("running-tests").style.opacity = 0;
     document.getElementById("tests-success").style.opacity = 0;
+    document.getElementById("tests-failure").style.opacity = 0;
 }
 
 const showRunning = () => {
@@ -41,8 +44,9 @@ const showRunning = () => {
     }, 200);
     document.getElementById("waiting-tests-prompt").style.opacity = 0;
     document.getElementById("no-robot-prompt").style.opacity = 0;
-    document.getElementById("initializing-tests").style.opacity = 0;
+    document.getElementById("robot-connected").style.opacity = 0;
     document.getElementById("tests-success").style.opacity = 0;
+    document.getElementById("tests-failure").style.opacity = 0;
 }
 
 const showSuccess = () => {
@@ -52,8 +56,21 @@ const showSuccess = () => {
     }, 200);
     document.getElementById("waiting-tests-prompt").style.opacity = 0;
     document.getElementById("no-robot-prompt").style.opacity = 0;
-    document.getElementById("initializing-tests").style.opacity = 0;
+    document.getElementById("robot-connected").style.opacity = 0;
     document.getElementById("running-tests").style.opacity = 0;
+    document.getElementById("tests-failure").style.opacity = 0;
+}
+
+const showFailure = () => {
+    clearTimeout(animationTimeout);
+    animationTimeout = setTimeout(() => {
+        document.getElementById("tests-failure").style.opacity = 1;
+    }, 200);
+    document.getElementById("waiting-tests-prompt").style.opacity = 0;
+    document.getElementById("no-robot-prompt").style.opacity = 0;
+    document.getElementById("robot-connected").style.opacity = 0;
+    document.getElementById("running-tests").style.opacity = 0;
+    document.getElementById("tests-success").style.opacity = 0;
 }
 
 function stateToIcon(state) {
@@ -73,8 +90,8 @@ function stateToIcon(state) {
 
 class Test {
     constructor(name, state) {
-        if(!state) state = "waiting";
-        if(!stateToIcon(state)) { console.error("Invalid state for test: " + name, "       ", state); return; }
+        if (!state) state = "waiting";
+        if (!stateToIcon(state)) { console.error("Invalid state for test: " + name, "       ", state); return; }
         this.name = name;
         this.state = state;
 
@@ -101,24 +118,24 @@ class Test {
         this.durationElement = testTimeElement;
         this.stateElement = testStateElement;
         this.iconElement = testStateIconElement;
-        
+
         this.timeStarted = new Date().getTime();
 
         this.timer = setInterval(() => {
-            if(this.state === "waiting") return;
+            if (this.state === "waiting") return;
             this.updateTime();
-        }, 100);
+        }, 10);
 
     }
 
     setState(newState) {
-        if(!stateToIcon(newState)) return;
+        if (!stateToIcon(newState)) return;
         this.iconElement.classList.remove(this.state);
         this.state = newState;
         this.iconElement.innerText = stateToIcon(newState);
         this.iconElement.classList.add(newState);
 
-        if(newState === "passed") {
+        if (newState === "passed") {
             clearInterval(this.timer);
         } else {
             this.timeStarted = new Date().getTime();
@@ -126,12 +143,12 @@ class Test {
     }
 
     setTimeElapsed(seconds) {
-        this.timeStarted = new Date().getTime()-seconds*1000;
+        this.timeStarted = new Date().getTime() - seconds * 1000;
     }
 
     updateTime() {
-        if(this.state !== "running") return;
-        if(((new Date().getTime() - this.timeStarted) / 1000) > 60) {
+        if (this.state !== "running") return;
+        if (((new Date().getTime() - this.timeStarted) / 1000) > 60) {
             let minutes = ((new Date().getTime() - this.timeStarted) / 1000 / 60).toFixed(0);
             let seconds = ((new Date().getTime() - this.timeStarted) / 1000 % 60).toFixed(1);
             this.durationElement.innerText = minutes + "m " + seconds + "s";
@@ -146,24 +163,111 @@ class Test {
     }
 }
 
-let tests = {};
+function subsystemStatusToState(status) {
+    switch (status) {
+        case 0:
+            return "passed";
+        case 1:
+            return "failed";
+        case 2:
+            return "failed";
+        case 3:
+            return "running";
+        default:
+            return "waiting";
+    }
+}
 
-const onConnect = () => {
+const parseFaultString = (subsystemName, faultString) => {
+    let severity = faultString[0];
+    let warning = severity === "0";
+    let timestamp = faultString.split(";")[1];
+    let static = faultString.split(";")[2] === "1";
+    let description = faultString.split(";")[3];
+
+    return {
+        subsystemName,
+        warning,
+        timestamp,
+        static,
+        description
+    }
+}
+
+let tests = {};
+let SubsystemList = [];
+let SubsystemStatuses = {};
+const onConnect = async () => {
     console.log("Robot connected");
     showConnected();
+
+    let onIsInTestUpdate = (value) => {
+        if (value) {
+            showWaiting();
+        } else {
+            showConnected();
+        }
+    }
+    robot.getTopicUpdateEvent("/Diagnostics/IsInTest").addEventListener(onIsInTestUpdate);
+    onIsInTestUpdate(await robot.getNetworkTablesValue("/Diagnostics/IsInTest"));
+
+
+    let onSubsystemListUpdate = (value) => {
+        SubsystemList = value;
+
+        for (const subsystem of SubsystemList) {
+            tests[subsystem] = new Test(subsystem);
+            let onStatusUpdate = async (status) => {
+                let faults = await robot.getNetworkTablesValue("/Diagnostics/Subsystems/" + subsystem + "/Faults");
+                status = faults.length > 0 ? 1 : status;
+                SubsystemStatuses[subsystem] = status;
+                tests[subsystem].setState(subsystemStatusToState(status));
+            }
+            robot.getTopicUpdateEvent("/Diagnostics/Subsystems/" + subsystem + "/Status").addEventListener(onStatusUpdate);
+
+            let onUpdateRunning = (running) => {
+                tests[subsystem].updateTime();
+                if (running) {
+                    tests[subsystem].setState("running");
+                    robot.getTopicUpdateEvent("/Diagnostics/Subsystems/" + subsystem + "/Status");
+                } else
+                    tests[subsystem].setState(subsystemStatusToState(SubsystemStatuses[subsystem]));
+            }
+            robot.getTopicUpdateEvent("/SmartDashboard/Diagnostics/Tests/Test" + subsystem + "/running").addEventListener(onUpdateRunning);
+            robot.getNetworkTablesValue("/SmartDashboard/Diagnostics/Tests/Test" + subsystem + "/running").then(onUpdateRunning);
+        }
+    }
+    onSubsystemListUpdate(await robot.getNetworkTablesValue("/Diagnostics/SubsystemList"));
+
+    let onAllRunningUpdate = async (running) => {
+        if (running) {
+            Object.values(tests).forEach(test => {
+                test.setTimeElapsed(0);
+                test.updateTime();
+                test.setState("waiting")
+            });
+            showRunning();
+        } else {
+            if (Object.values(SubsystemStatuses).every(status => status === 0))
+                showSuccess();
+            else
+                showFailure();
+        }
+    }
+    robot.getTopicUpdateEvent("/Diagnostics/IsRunningTests").addEventListener(onAllRunningUpdate);
+
 };
 
-const onDisconnect = () => {
-    Object.values(tests).forEach(test => test.destroy());
-    tests = {};
-    showNoRobot();
+const onDisconnect = (first) => {
+    if (!first) window.location.reload();
     console.log("Robot disconnected");
+    showNoRobot();
 };
 
 robot.onConnect.addEventListener(onConnect);
 robot.onDisconnect.addEventListener(onDisconnect);
 
-robot.isConnected() ? onConnect() : onDisconnect();
+robot.isConnected() ? onConnect() : onDisconnect(true);
 
 /*
 let task1 = new Test("Test 1");

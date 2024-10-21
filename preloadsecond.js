@@ -14,7 +14,8 @@ const EventMock = () => {
             }
 
             self.addEventListener(handler)
-        }
+        },
+        wait: () => new Promise((resolve) => self.handleOnce(resolve))
     }
 
     return [self, (...args) => listeners.forEach(l => l(...args))]
@@ -40,7 +41,7 @@ contextBridge.exposeInMainWorld("robot", {
     setNetworkTablesValue: async (key, value) => {
         return await ipcRenderer.invoke("set-topic-value", key, value);
     },
-    getNetworkTablesValue: async (key, type) => {
+    getNetworkTablesValue: async (key) => {
         return await ipcRenderer.invoke("get-topic-value", key);
     },
     isConnected: () => lastConnected,

@@ -77,7 +77,7 @@ function createWindow () {
 
   mainWindow.setMenu(null)
   mainWindow.loadFile('main/index.html')
-  mainWindow.webContents.openDevTools();
+  //mainWindow.webContents.openDevTools();
 
   const secondaryWindow = new BrowserWindow({
     width: 800,

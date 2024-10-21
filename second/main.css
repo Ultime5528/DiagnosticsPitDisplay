@@ -62,14 +62,13 @@ body > div {
     color: #2196F3;
 }
 
-.initializing-tests {
+.robot-connected {
     text-align: center;
 }
 
-.initializing-tests > .material-symbols-outlined {
+.robot-connected > .material-symbols-outlined {
     font-size: 5em;
-    color: #f4f436;
-    animation: rotate 1s linear infinite;
+    color: #4CAF50;
 }
 
 .tests-success {
@@ -79,6 +78,15 @@ body > div {
 .tests-success > .material-symbols-outlined {
     font-size: 5em;
     color: #4CAF50;
+}
+
+.tests-failure {
+    text-align: center;
+}
+
+.tests-failure > .material-symbols-outlined {
+    font-size: 5em;
+    color: #f44336;
 }
 
 .running-tests {
