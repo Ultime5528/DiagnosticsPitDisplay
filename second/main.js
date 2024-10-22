@@ -129,17 +129,13 @@ class Test {
     }
 
     setState(newState) {
-        if (!stateToIcon(newState)) return;
+        if (!stateToIcon(newState)) return console.log("invalid state ", newState);
         this.iconElement.classList.remove(this.state);
         this.state = newState;
         this.iconElement.innerText = stateToIcon(newState);
         this.iconElement.classList.add(newState);
 
-        if (newState === "passed") {
-            clearInterval(this.timer);
-        } else {
-            this.timeStarted = new Date().getTime();
-        }
+        if(newState === "running") this.timeStarted = new Date().getTime();
     }
 
     setTimeElapsed(seconds) {
@@ -229,7 +225,6 @@ const onConnect = async () => {
                 tests[subsystem].updateTime();
                 if (running) {
                     tests[subsystem].setState("running");
-                    robot.getTopicUpdateEvent("/Diagnostics/Subsystems/" + subsystem + "/Status");
                 } else
                     tests[subsystem].setState(subsystemStatusToState(SubsystemStatuses[subsystem]));
             }
