@@ -232,7 +232,7 @@ const onConnect = async () => {
             robot.getNetworkTablesValue("/SmartDashboard/Diagnostics/Tests/Test" + subsystem + "/running").then(onUpdateRunning);
         }
     }
-    onSubsystemListUpdate(await robot.getNetworkTablesValue("/Diagnostics/SubsystemList"));
+    onSubsystemListUpdate(await robot.getNetworkTablesValue("/Diagnostics/SubsystemListTests"));
 
     let onAllRunningUpdate = async (running) => {
         if (running) {

@@ -1,13 +1,14 @@
-const DEBUG = true;
+const DEBUG = false;
 const TEAM_NUMBER = 5528;
 
 const { app, BrowserWindow, ipcMain } = require('electron')
+
+if (require('electron-squirrel-startup')) app.quit();
+
 const path = require('node:path')
 const ntClient = require('wpilib-nt-client');
 
 const client = new ntClient.Client();
-
-let windows = [];
 
 let topics = {};
 let connected = true;
@@ -15,7 +16,7 @@ const onConnect = (isConnected, err) => {
   if(err && !isConnected || connected !== isConnected && !isConnected) {
     BrowserWindow.getAllWindows().forEach(w => w.webContents.send("robot-connection-update", false));
     topics = {};
-    setTimeout(() => client.start(onConnect, DEBUG ? "localhost" : `roboRIO-${TEAM_NUMBER}-FRC.local`), 300);
+    setTimeout(() => client.start(onConnect, DEBUG ? "localhost" : `10.55.28.2`), 300);
   }
   connected = isConnected;
 }
@@ -72,7 +73,7 @@ function createWindow () {
     },
     maximize: true,
     title: "Ultime 5528 - System Diagnostics",
-    icon: path.join(__dirname, 'icon.png'),
+    icon: path.join(__dirname, "icons", 'icon.png'),
   })
 
   mainWindow.setMenu(null)
@@ -88,12 +89,11 @@ function createWindow () {
     fullscreenable: true,
     maximize: true,
     title: "Ultime 5528 - System Diagnostics",
-    icon: path.join(__dirname, 'icon.png')
+    icon: path.join(__dirname, "icons", 'icon.png')
   });
 
   secondaryWindow.setMenu(null)
   secondaryWindow.loadFile('second/index.html');
-  secondaryWindow.webContents.openDevTools();
 
   secondaryWindow.on("enter-full-screen", () => secondaryWindow.webContents.send("fullscreen-update", true));
   secondaryWindow.on("leave-full-screen", () => secondaryWindow.webContents.send("fullscreen-update", false));
