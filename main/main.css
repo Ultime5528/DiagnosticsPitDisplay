@@ -310,3 +310,69 @@ body {
     bottom: 20px;
     position: fixed;
 }
+
+#settings-sidebar-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 0;
+}
+
+.settings-overlay {
+    background-color: rgba(0, 0, 0, 0.5);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+}
+
+.settings-container {
+    background-color: rgb(40, 40, 40);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    color: white;
+    display: flex;
+    flex-direction: column;
+}
+
+.settings-top > span {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+input[type="checkbox"] {
+    width: 30px;
+    height: 30px;
+    appearance: none;
+    background-color: rgb(50, 50, 50);
+    border-radius: 5px;
+    cursor: pointer;
+    position: relative;
+    transition: 0.2s linear background-color;
+}
+
+input[type="checkbox"]:checked {
+    background-color: rgb(120, 120, 120);
+}
+
+.settings-item {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.settings-item > span {
+    margin-right: 10px;
+}
+
+.settings-top {
+    display: flex;
+    justify-content: space-between;    
+}

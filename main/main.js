@@ -425,6 +425,7 @@ document.getElementById("run-all-checks").addEventListener("click", async () => 
     for (const subsystem of SubsystemListTests) {
         await ChecksSubsystemsElems[subsystem].onStartCheck();
     }
+    await new Promise(res => setTimeout(res, 750));
     runningTests = false;
     robot.setNetworkTablesValue("/Diagnostics/IsRunningTests", false);
     document.getElementById("run-all-checks").disabled = false;

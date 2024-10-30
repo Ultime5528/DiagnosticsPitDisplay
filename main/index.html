@@ -27,6 +27,9 @@
             <div class="sidebar-menu-item ripple-button" title="Checks" id="checks-sidebar-btn">
                 <span class="material-symbols-outlined">bug_report</span>
             </div>
+            <div class="sidebar-menu-item ripple-button" title="Settings" id="settings-sidebar-btn">
+                <span class="material-symbols-outlined">settings</span>
+            </div>
         </div>
     </div>
     <div class="page">
@@ -72,6 +75,17 @@
             <div id="run-all-checks" style="display: none; text-align: center; margin: 10px; border-radius: 10px;" class="button">Executer tous les checks (Run checks)</div>
         </div>
         <br>
+    </div>
+    <div class="settings-overlay" id="settings-overlay">
+        <div class="settings-container">
+            <div class="settings-top">
+                <span>Paramètres</span><span style="color: rgb(230,230,230)" class="material-symbols-outlined">close</span>
+            </div>
+            <div class="settings-item">
+                <span>Mode déboggage</span>
+                <input type="checkbox" id="debug-mode" name="debug-mode">
+            </div>
+        </div>
     </div>
     <div class="bottombar">
         <div id="robot-status" class="loading"></div>

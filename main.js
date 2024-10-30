@@ -1,5 +1,4 @@
 const DEBUG = false;
-const TEAM_NUMBER = 5528;
 
 const { app, BrowserWindow, ipcMain } = require('electron')
 

@@ -243,6 +243,7 @@ const onConnect = async () => {
             });
             showRunning();
         } else {
+            await new Promise(res => setTimeout(res, 1000));
             if (Object.values(SubsystemStatuses).every(status => status === 0))
                 showSuccess();
             else
