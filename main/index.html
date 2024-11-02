@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        .material-symbols-outlined {
+          font-variation-settings:
+          'FILL' 0,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 24
+        }
+    </style>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-menu">
+            <div class="sidebar-menu-item ripple-button" title="Home" id="home-sidebar-btn">
+                <span class="material-symbols-outlined">home</span>
+            </div>
+            <div class="sidebar-menu-item ripple-button" title="Diagnostics" id="diagnostics-sidebar-btn">
+                <span class="material-symbols-outlined">diagnosis</span>
+            </div>
+            <div class="sidebar-menu-item ripple-button" title="Checks" id="checks-sidebar-btn">
+                <span class="material-symbols-outlined">bug_report</span>
+            </div>
+            <div class="sidebar-menu-item ripple-button" title="Settings" id="settings-sidebar-btn">
+                <span class="material-symbols-outlined">settings</span>
+            </div>
+        </div>
+    </div>
+    <div class="page">
+        <div id="robot-not-test-mode" style="display: none;">
+            <h3>Le robot n'est pas en mode diagnostic. (Robot is not in diagnostic mode)</h3>
+        </div>
+        <div id="home" style="display: none;">
+            <br><br>
+            <br><br>
+            <div class="status-message">
+                <div class="status-message-left">
+                    Sous-systèmes (Subsystems): <span id="subsystem-count">N/A</span><br>
+                    Problèmes (Faults): <span id="fault-count">N/A</span>
+                </div>
+                <div class="status-message-right">
+                    Sous-systèmes fautifs (Faulty subsystems): <span id="faulty-subsystem-count">N/A</span><br>
+                    Voltage de la Batterie (Battery Voltage): <span id="battery-voltage-count">N/A</span>
+                </div>
+            </div>
+            <div class="home-graphs">
+                <div class="battery-voltage">
+                    <h3>Voltage de la batterie (Battery Voltage)</h3>
+                    <canvas id="battery-voltage-chart"></canvas>
+                </div>
+                <div class="faults-subsystems">
+                    <h3>Problèmes par sous-système (Faults by subsystem)</h3>
+                    <canvas id="faults-subsystems-chart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div id="diagnostics" style="display: none;">
+            <h3 class="page-title">Diagnostics</h3>
+            <h3 id="loading-faults" style="color: white; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);">Chargement... (Loading...)</h3>
+            <h3 id="nofaults" style="display: none; color: white; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);">Pas de problèmes (No faults)</h3>
+            <div id="faults" class="problems"></div>
+            <div id="clearfaults" class="button" style="display: none; text-align: center; margin: 10px; border-radius: 10px;">Effacer les problèmes (Clear faults)</div>
+        </div>
+        <div id="checks" style="display: none;">
+            <h3 class="page-title">Checks</h3>
+            <h3 id="loading-checks" style="color: white; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);">Chargement... (Loading...)</h3>
+            <div id="checks-list" class="checks">
+            </div>
+            <div id="run-all-checks" style="display: none; text-align: center; margin: 10px; border-radius: 10px;" class="button">Executer tous les checks (Run checks)</div>
+        </div>
+        <br>
+    </div>
+    <div class="settings-overlay" id="settings-overlay" style="opacity: 0; display: none;">
+        <div class="settings-container">
+            <div class="settings-top">
+                <span>Paramètres</span><span id="close-settings-btn" style="color: rgb(230,230,230)" class="material-symbols-outlined">close</span>
+            </div>
+            <div class="settings-item">
+                <span>Mode déboggage</span>
+                <input type="checkbox" id="debug-mode">
+            </div>
+            <div class="settings-item">
+                <span>Second écran</span>
+                <input type="checkbox" id="second-screen">
+            </div>
+        </div>
+    </div>
+    <div class="bottombar">
+        <div id="robot-status" class="loading"></div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

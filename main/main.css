@@ -1,0 +1,380 @@
+body {
+    background-color: rgb(30, 30, 30);
+    font-family: 'Roboto', sans-serif;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.button {
+    cursor: pointer;
+    background-color: rgb(45, 45, 45);
+    border: 0;
+    color: white;
+    padding: 10px;
+    transition: 0.2s linear background-color;
+    position: relative;
+}
+
+.button:hover {
+    background-color: rgb(60, 60, 60);
+}
+
+::-webkit-scrollbar {
+    width: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgb(40, 40, 40);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: rgb(70, 70, 70);
+    border-radius: 10px;
+    border: 3px solid rgb(40, 40, 40);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(90, 90, 90);
+}
+
+.sidebar {
+    background-color: rgb(40, 40, 40);
+    color: white;
+    width: 50px;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+.sidebar-menu-item {
+    width: 30px;
+    height: 30px;
+    padding: 10px;
+    text-align: center;
+    color: white;
+    text-decoration: none;
+    transition: 0.2s linear background-color;
+    background-color: rgb(40, 40, 40);
+}
+
+.ripple-button, .button {
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.sidebar-menu-item.active {
+    background-color: rgb(70, 70, 70);
+}
+
+.sidebar-menu-item:hover {
+    background-color: rgb(60, 60, 60);
+}
+
+.ripple {
+    position: absolute;
+    border-radius: 50%;
+    transform: scale(0);
+    animation: ripple 0.6s ease-out;
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.2);
+    pointer-events: none;
+}
+
+@keyframes rotate {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes ripple {
+    to {
+      transform: scale(4);
+      opacity: 0;
+    }
+}
+
+.page {
+    position: absolute;
+    top: 0;
+    left: 50px;
+    width: calc(100% - 50px);
+    height: calc(100% - 20px);
+}
+
+.bottombar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 20px;
+
+    background-color: rgb(40, 40, 40);
+
+    display: flex;
+    justify-content: right;
+    align-items: center;
+}
+
+#robot-status {
+    text-align: right;
+    margin-right: 5px;
+    font-size: 0.8em;
+}
+
+#robot-status.connected::after {
+    content: "Robot connecté (Robot connected)";
+    color: #4CAF50;
+}
+
+#robot-status.disconnected::after {
+    content: "Robot déconnecté (Robot disconnected)";
+    color: #f44336;
+}
+
+#robot-status.loading::after {
+    content: "Chargement... (Loading...)";
+    color: white;
+}
+
+.page-title {
+    color: white;
+    font-size: 1.5em;
+    margin: 10px;
+}
+
+.home {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: top;
+}
+
+#home {
+    display: flex;
+    flex-direction: column;
+    justify-content: left;
+    align-items: top;
+    color: white;
+}
+
+.status-message {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    background-color: rgb(50, 50, 50);
+    padding: 20px;
+    box-shadow: 10px 0 10px rgba(0, 0, 0, 0.5);
+
+    position: fixed;
+    top: 0;
+    left: 50px;
+    right: 0;
+}
+
+.status-message-right {
+    text-align: right;
+}
+
+.status-message span {
+    font-weight: bold;
+}
+
+.home-graphs {
+    margin: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.home-graphs > div {
+    background-color: rgb(50, 50, 50);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    color: white;
+    height: 200px;
+    padding-bottom: 40px;
+}
+
+.home-graphs > div > h3 {
+    margin: 0 0 10px 0;
+}
+
+.problems {
+    margin: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.problem {
+    background-color: rgb(50, 50, 50);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.problem-title {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.problem-description {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    font-size: 1em;
+}
+
+.problem-icon {
+    font-size: 2em;
+    color: #f44336;
+    display: flex;
+    align-items: center;
+}
+
+.problem-timestamp {
+    font-size: 0.8em;
+    color: #bbb;
+}
+
+.checks {
+    margin: 10px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    flex-grow: 1;
+    gap: 10px;
+}
+
+.check {
+    background-color: rgb(50, 50, 50);
+    padding: 20px;
+    width: calc(50% - 45px);
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: row;
+    gap: 10px;
+}
+
+.check-title {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.check-status {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}
+
+.check-status > .button {
+    border-radius: 5px;
+}
+
+.check-status > span {
+    font-size: 2em;
+    font-weight: bold;
+}
+
+#robot-not-test-mode {
+    background-color: rgb(40, 40, 40);
+    color: white;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    width: 100%;
+    height: 100%;
+    
+    z-index: 1000;
+
+    left: 50px;
+    bottom: 20px;
+    position: fixed;
+}
+
+#settings-sidebar-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 0;
+}
+
+.settings-overlay {
+    background-color: rgba(0, 0, 0, 0.5);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    opacity: 0;
+    transition: 0.1s opacity ease-in-out;
+}
+
+.settings-container {
+    background-color: rgb(40, 40, 40);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    color: white;
+    display: flex;
+    flex-direction: column;
+}
+
+.settings-top > span {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+input[type="checkbox"] {
+    width: 30px;
+    height: 30px;
+    appearance: none;
+    background-color: rgb(50, 50, 50);
+    border-radius: 5px;
+    cursor: pointer;
+    position: relative;
+    transition: 0.2s linear background-color;
+}
+
+input[type="checkbox"]:checked {
+    background-color: rgb(120, 120, 120);
+}
+
+.settings-item {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.settings-item > span {
+    margin-right: 10px;
+}
+
+.settings-top {
+    display: flex;
+    justify-content: space-between;    
+}
