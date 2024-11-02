@@ -76,14 +76,18 @@
         </div>
         <br>
     </div>
-    <div class="settings-overlay" id="settings-overlay">
+    <div class="settings-overlay" id="settings-overlay" style="opacity: 0; display: none;">
         <div class="settings-container">
             <div class="settings-top">
-                <span>Paramètres</span><span style="color: rgb(230,230,230)" class="material-symbols-outlined">close</span>
+                <span>Paramètres</span><span id="close-settings-btn" style="color: rgb(230,230,230)" class="material-symbols-outlined">close</span>
             </div>
             <div class="settings-item">
                 <span>Mode déboggage</span>
-                <input type="checkbox" id="debug-mode" name="debug-mode">
+                <input type="checkbox" id="debug-mode">
+            </div>
+            <div class="settings-item">
+                <span>Second écran</span>
+                <input type="checkbox" id="second-screen">
             </div>
         </div>
     </div>

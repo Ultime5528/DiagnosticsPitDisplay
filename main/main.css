@@ -328,6 +328,8 @@ body {
     justify-content: center;
     align-items: center;
     display: flex;
+    opacity: 0;
+    transition: 0.1s opacity ease-in-out;
 }
 
 .settings-container {

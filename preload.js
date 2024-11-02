@@ -44,6 +44,10 @@ contextBridge.exposeInMainWorld("robot", {
         return await ipcRenderer.invoke("get-topic-value", key);
     },
     isConnected: () => lastConnected,
+    setDebugMode: (value) => ipcRenderer.invoke("debug-mode", value),
+    setSecondaryScreen: async (value) => await ipcRenderer.invoke("set-secondary-screen", value),
+    isDebugMode: async () => await ipcRenderer.invoke("is-debug-mode"),
+    getSecondaryScreen: async () => await ipcRenderer.invoke("get-secondary-screen")
 })
 
 ipcRenderer.invoke("is-robot-connected").then(connected => {

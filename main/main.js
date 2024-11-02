@@ -107,12 +107,12 @@ const createCheckElement = (subsystem, onStartCheck) => {
     icon.innerText = 'pending';
     status.appendChild(icon);
 
-    /*const button = document.createElement('div');
+    const button = document.createElement('div');
     button.classList.add('button');
-    button.innerText = 'Executer le check (Run check)';
+    button.innerText = 'Run';
     registerRippleButton(button);
-    button.addEventListener('click', onStartCheck);
-    status.appendChild(button);*/
+    button.addEventListener('click', () => onStartCheck(true));
+    status.appendChild(button);
 
     checkElement.appendChild(status);
 
@@ -270,6 +270,22 @@ document.getElementById("clearfaults").addEventListener("click", async () => {
 document.getElementById("home-sidebar-btn").addEventListener("click", showHome);
 document.getElementById("diagnostics-sidebar-btn").addEventListener("click", showDiagnostics);
 document.getElementById("checks-sidebar-btn").addEventListener("click", showChecks);
+document.getElementById("settings-sidebar-btn").addEventListener("click", () => {
+    document.getElementById("settings-overlay").style = "opacity: 1;";
+});
+document.getElementById("debug-mode").addEventListener("change", (e) => {
+    robot.setDebugMode(e.target.checked);
+});
+document.getElementById("second-screen").addEventListener("change", (e) => {
+    robot.setSecondaryScreen(e.target.checked);
+});
+document.getElementById("close-settings-btn").addEventListener("click", () => {
+    document.getElementById("settings-overlay").style.opacity = 0;
+    setTimeout(() => {
+        document.getElementById("settings-overlay").style.display = "none";
+    }, 100);
+});
+
 
 const onUpdateFaults = async () => {
     let faultCount = Object.values(Faults).reduce((acc, val) => acc + val.length, 0);
@@ -360,7 +376,8 @@ const onConnect = async () => {
     SubsystemListTests = await robot.getNetworkTablesValue("/Diagnostics/SubsystemListTests");
     // Create check element for each subsystem
     for(const subsystem of SubsystemListTests) {
-        ChecksSubsystemsElems[subsystem] = createCheckElement(subsystem, () => {
+        ChecksSubsystemsElems[subsystem] = createCheckElement(subsystem, (isSingular) => {
+            if(isSingular && runningTests) return;
             return new Promise(async resolve => {
                 console.log(`Running check for ${subsystem}`);
 
@@ -466,3 +483,10 @@ setTimeout(() => {
     document.getElementById("diagnostics-sidebar-btn").style.transition = "";
     document.getElementById("checks-sidebar-btn").style.transition = "";
 }, 200)
+
+robot.isDebugMode().then(debug => {
+    document.getElementById("debug-mode").checked = debug;
+});
+robot.getSecondaryScreen().then(secondary => {
+    document.getElementById("second-screen").checked = secondary;
+});
