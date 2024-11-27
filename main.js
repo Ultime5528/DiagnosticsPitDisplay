@@ -37,6 +37,7 @@ const client = new ntClient.Client();
 
 let topics = {};
 let connected = false;
+let connecting = false;
 let listener
 let clientListener = (entryKey, entryValue, entryValueType, callbackType, entryID) => {
   if(callbackType === "delete" && topics[entryKey]) delete topics[entryKey];
@@ -60,14 +61,16 @@ let clientListener = (entryKey, entryValue, entryValueType, callbackType, entryI
 }
 const onConnect = (isConnected, err) => {
   if(err && !isConnected || connected !== isConnected && !isConnected || err === "reconnect") {
+    connecting = false;
     BrowserWindow.getAllWindows().forEach(w => w.webContents.send("robot-connection-update", false));
     topics = {};
     client.removeListener(listener);
     listener = client.addListener(clientListener)
-    setTimeout(() => client.start(onConnect, DEBUG ? "localhost" : `10.55.28.2`), 300);
+    setTimeout(() => {client.start(onConnect, DEBUG ? "localhost" : `10.55.28.2`); connecting = true;}, 700);
   }
   connected = isConnected;
   if(connected) {
+    connecting = false;
     client.getKeys().forEach(key => {
       const entry = client.getEntry(client.getKeyID(key));
       topics[key] = {

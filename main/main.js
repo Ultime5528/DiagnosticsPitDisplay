@@ -260,7 +260,7 @@ const showChecks = () => {
 document.getElementById("clearfaults").addEventListener("click", async () => {
     for (const subsystem of SubsystemList) {
         await robot.setNetworkTablesValue(`/Diagnostics/Subsystems/${subsystem}/Faults`, []);
-        await robot.setNetworkTablesValue(`/Diagnostics/Subsystems/${subsystem}/Status`, parseInt(0));
+        await robot.setNetworkTablesValue(`/Diagnostics/Subsystems/${subsystem}/Status`, "ok");
         Faults[subsystem] = [];
     }
 
@@ -286,6 +286,13 @@ document.getElementById("close-settings-btn").addEventListener("click", () => {
     }, 100);
 });
 
+const subsystemStatusToInt = (status) => {
+    return status === "ok" ? 0 : status === "warning" ? 1 : status === "error" ? 2 : 3;
+}
+
+const intToSubsystemStatus = (status) => {
+    return status === 0 ? "ok" : status === 1 ? "warning" : status === 2 ? "error" : "running_test";
+}
 
 const onUpdateFaults = async () => {
     let faultCount = Object.values(Faults).reduce((acc, val) => acc + val.length, 0);
@@ -347,7 +354,7 @@ const onConnect = async () => {
     // Acquire faults for every subsystem
     for (const subsystem of SubsystemList) {
         Faults[subsystem] = await robot.getNetworkTablesValue(`/Diagnostics/Subsystems/${subsystem}/Faults`);
-        SubsystemStatuses[subsystem] = await robot.getNetworkTablesValue(`/Diagnostics/Subsystems/${subsystem}/Status`);
+        SubsystemStatuses[subsystem] = subsystemStatusToInt(await robot.getNetworkTablesValue(`/Diagnostics/Subsystems/${subsystem}/Status`));
 
         // Register fault update events for each subsystem.
         robot.getTopicUpdateEvent(`/Diagnostics/Subsystems/${subsystem}/Faults`).addEventListener(async (value) => {
@@ -360,7 +367,7 @@ const onConnect = async () => {
 
         // Register status update events for each subsystem.
         robot.getTopicUpdateEvent(`/Diagnostics/Subsystems/${subsystem}/Status`).addEventListener(async (value) => {
-            SubsystemStatuses[subsystem] = value;
+            SubsystemStatuses[subsystem] = subsystemStatusToInt(value);
             if(ChecksSubsystemsElems[subsystem]) {
                 ChecksSubsystemsElems[subsystem].icon.innerText = SubsystemStatuses[subsystem] === 0 ? 'check' : SubsystemStatuses[subsystem] === 1 ? 'warning' : SubsystemStatuses[subsystem] === 2 ? "error_outline" : 'autorenew';
                 ChecksSubsystemsElems[subsystem].icon.style.color = SubsystemStatuses[subsystem] === 0 ? '#4CAF50' : SubsystemStatuses[subsystem] === 1 ? '#FFA500' : SubsystemStatuses[subsystem] === 2 ? "#f44336" : '#f4f436';
@@ -382,7 +389,7 @@ const onConnect = async () => {
                 console.log(`Running check for ${subsystem}`);
 
                 // Setup
-                await robot.setNetworkTablesValue("/Diagnostics/Subsystems/" + subsystem + "/Status", 3);
+                await robot.setNetworkTablesValue("/Diagnostics/Subsystems/" + subsystem + "/Status", "running_test");
                 let topicEvent = robot.getTopicUpdateEvent("/SmartDashboard/Diagnostics/Tests/Test" + subsystem + "/running")
                 let handler = async (value) => {
                     topicEvent.removeEventListener(handler);
@@ -393,7 +400,7 @@ const onConnect = async () => {
                             let severity = parseFaultString(subsystem, fault).warning ? 1 : 2;
                             if (severity > highestSeverity) highestSeverity = severity;
                         }
-                        if (SubsystemStatuses[subsystem] === 3) await robot.setNetworkTablesValue("/Diagnostics/Subsystems/" + subsystem + "/Status", highestSeverity);
+                        if (SubsystemStatuses[subsystem] === 3) await robot.setNetworkTablesValue("/Diagnostics/Subsystems/" + subsystem + "/Status", intToSubsystemStatus(highestSeverity));
                     }
                 }
                 topicEvent.addEventListener(handler);

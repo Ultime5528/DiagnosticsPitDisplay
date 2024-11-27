@@ -190,6 +190,15 @@ const parseFaultString = (subsystemName, faultString) => {
     }
 }
 
+const subsystemStatusToInt = (status) => {
+    return status === "ok" ? 0 : status === "warning" ? 1 : status === "error" ? 2 : 3;
+}
+
+const intToSubsystemStatus = (status) => {
+    return status === 0 ? "ok" : status === 1 ? "warning" : status === 2 ? "error" : "running_test";
+}
+
+
 let tests = {};
 let SubsystemList = [];
 let SubsystemStatuses = {};
@@ -215,9 +224,9 @@ const onConnect = async () => {
             tests[subsystem] = new Test(subsystem);
             let onStatusUpdate = async (status) => {
                 let faults = await robot.getNetworkTablesValue("/Diagnostics/Subsystems/" + subsystem + "/Faults");
-                status = faults.length > 0 ? 1 : status;
-                SubsystemStatuses[subsystem] = status;
-                tests[subsystem].setState(subsystemStatusToState(status));
+                status = faults.length > 0 ? 1 : subsystemStatusToInt(status);
+                SubsystemStatuses[subsystem] = subsystemStatusToInt(status);
+                tests[subsystem].setState(subsystemStatusToState(subsystemStatusToInt(status)));
             }
             robot.getTopicUpdateEvent("/Diagnostics/Subsystems/" + subsystem + "/Status").addEventListener(onStatusUpdate);
 
