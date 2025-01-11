@@ -257,7 +257,7 @@ const showChecks = () => {
     document.getElementById("checks-sidebar-btn").classList.add("active");
 }
 
-document.getElementById("clearfaults").addEventListener("click", async () => {
+const clearFaults = async () => {
     for (const subsystem of SubsystemList) {
         await robot.setNetworkTablesValue(`/Diagnostics/Subsystems/${subsystem}/Faults`, []);
         await robot.setNetworkTablesValue(`/Diagnostics/Subsystems/${subsystem}/Status`, "ok");
@@ -265,7 +265,9 @@ document.getElementById("clearfaults").addEventListener("click", async () => {
     }
 
     document.getElementById("faults").innerHTML = "";
-});
+}
+
+document.getElementById("clearfaults").addEventListener("click", clearFaults);
 
 document.getElementById("home-sidebar-btn").addEventListener("click", showHome);
 document.getElementById("diagnostics-sidebar-btn").addEventListener("click", showDiagnostics);
@@ -361,7 +363,7 @@ const onConnect = async () => {
             Faults[subsystem] = value;
 
             document.getElementById("faults").innerHTML = "";
-            for (const fault of value) document.getElementById("faults").appendChild(createFaultElement(parseFaultString(subsystem, fault)));
+            for (const subsystem of SubsystemList) for (const fault of Faults[subsystem]) document.getElementById("faults").appendChild(createFaultElement(parseFaultString(subsystem, fault)));
             onUpdateFaults();
         });
 
@@ -421,7 +423,7 @@ const onConnect = async () => {
 
     // Setup checks screen
     document.getElementById("loading-checks").style.display = "none";
-    document.getElementById("run-all-checks").style.display = "";
+    document.getElementById("run-all-checks-container").style.display = "";
 
     // Create fault elements
     for (const subsystem of SubsystemList) for (const fault of Faults[subsystem]) document.getElementById("faults").appendChild(createFaultElement(parseFaultString(subsystem, fault)));
@@ -441,6 +443,7 @@ document.getElementById("run-all-checks").addEventListener("click", async () => 
     if (runningTests) return;
     document.getElementById("run-all-checks").disabled = true;
     runningTests = true;
+    await clearFaults();
     robot.setNetworkTablesValue("/Diagnostics/IsRunningTests", true);
     for (const subsystem of SubsystemListTests) {
         ChecksSubsystemsElems[subsystem].icon.innerText = 'pending';
