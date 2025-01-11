@@ -225,8 +225,8 @@ const onConnect = async () => {
             let onStatusUpdate = async (status) => {
                 let faults = await robot.getNetworkTablesValue("/Diagnostics/Subsystems/" + subsystem + "/Faults");
                 status = faults.length > 0 ? 1 : subsystemStatusToInt(status);
-                SubsystemStatuses[subsystem] = subsystemStatusToInt(status);
-                tests[subsystem].setState(subsystemStatusToState(subsystemStatusToInt(status)));
+                SubsystemStatuses[subsystem] = status;
+                tests[subsystem].setState(subsystemStatusToState(status));
             }
             robot.getTopicUpdateEvent("/Diagnostics/Subsystems/" + subsystem + "/Status").addEventListener(onStatusUpdate);
 
@@ -234,8 +234,9 @@ const onConnect = async () => {
                 tests[subsystem].updateTime();
                 if (running) {
                     tests[subsystem].setState("running");
-                } else
+                } else {
                     tests[subsystem].setState(subsystemStatusToState(SubsystemStatuses[subsystem]));
+                }
             }
             robot.getTopicUpdateEvent("/SmartDashboard/Diagnostics/Tests/Test" + subsystem + "/running").addEventListener(onUpdateRunning);
             robot.getNetworkTablesValue("/SmartDashboard/Diagnostics/Tests/Test" + subsystem + "/running").then(onUpdateRunning);
