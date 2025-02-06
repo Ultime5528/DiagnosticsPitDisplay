@@ -5,20 +5,6 @@ body {
     user-select: none;
 }
 
-.button {
-    cursor: pointer;
-    background-color: rgb(45, 45, 45);
-    border: 0;
-    color: white;
-    padding: 10px;
-    transition: 0.2s linear background-color;
-    position: relative;
-}
-
-.button:hover {
-    background-color: rgb(60, 60, 60);
-}
-
 ::-webkit-scrollbar {
     width: 12px;
 }
@@ -59,7 +45,7 @@ body {
     background-color: rgb(40, 40, 40);
 }
 
-.ripple-button, .button {
+.ripple-button {
     position: relative;
     overflow: hidden;
     cursor: pointer;
@@ -148,13 +134,6 @@ body {
     margin: 10px;
 }
 
-.home {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: top;
-}
-
 #home {
     display: flex;
     flex-direction: column;
@@ -206,14 +185,14 @@ body {
     margin: 0 0 10px 0;
 }
 
-.problems {
+.alerts {
     margin: 10px;
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 
-.problem {
+.component {
     background-color: rgb(50, 50, 50);
     padding: 20px;
     border-radius: 10px;
@@ -224,91 +203,56 @@ body {
     gap: 10px;
 }
 
-.problem-title {
-    font-size: 1.2em;
-    font-weight: bold;
-}
-
-.problem-description {
+.component-header {
     display: flex;
     flex-direction: row;
-    align-items: center;
-    gap: 10px;
-    font-size: 1em;
-}
-
-.problem-icon {
-    font-size: 2em;
-    color: #f44336;
-    display: flex;
-    align-items: center;
-}
-
-.problem-timestamp {
-    font-size: 0.8em;
-    color: #bbb;
-}
-
-.checks {
-    margin: 10px;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    flex-grow: 1;
-    gap: 10px;
-}
-
-.check {
-    background-color: rgb(50, 50, 50);
-    padding: 20px;
-    width: calc(50% - 45px);
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-    color: white;
-    display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+.component-header > div {
+    display: flex;
     flex-direction: row;
+    align-items: center;
     gap: 10px;
 }
 
-.check-title {
+.component-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toggle-arrow {
+    cursor: pointer;
+    transition: 0.2s linear transform;
+}
+
+.component-status {
+    font-size: 2.5em;
+}
+
+.alert {
+    background-color: rgb(50, 50, 50);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    color: white;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}
+
+.component-name {
     font-size: 1.2em;
     font-weight: bold;
 }
 
-.check-status {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
-}
-
-.check-status > .button {
-    border-radius: 5px;
-}
-
-.check-status > span {
+.alert-icon {
     font-size: 2em;
-    font-weight: bold;
-}
-
-#robot-not-test-mode {
-    background-color: rgb(40, 40, 40);
-    color: white;
-
     display: flex;
-    justify-content: center;
     align-items: center;
-
-    width: 100%;
-    height: 100%;
-    
-    z-index: 1000;
-
-    left: 50px;
-    bottom: 20px;
-    position: fixed;
 }
 
 #settings-sidebar-btn {
@@ -377,11 +321,4 @@ input[type="checkbox"]:checked {
 .settings-top {
     display: flex;
     justify-content: space-between;    
-}
-
-#run-all-checks-container {
-    position: fixed;
-    bottom: 20px;
-    left: 50px;
-    right: 0;
 }

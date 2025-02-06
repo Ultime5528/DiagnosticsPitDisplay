@@ -1,285 +1,178 @@
-let animationTimeout = null;
 
-const showNoRobot = () => {
-    clearTimeout(animationTimeout);
-    animationTimeout = setTimeout(() => {
-        document.getElementById("no-robot-prompt").style.opacity = 1;
-    }, 200);
-    document.getElementById("waiting-tests-prompt").style.opacity = 0;
-    document.getElementById("robot-connected").style.opacity = 0;
-    document.getElementById("running-tests").style.opacity = 0;
-    document.getElementById("tests-success").style.opacity = 0;
-    document.getElementById("tests-failure").style.opacity = 0;
+const CustomGetTopicUpdateEvent = (topic) => {
+    const event = robot.getTopicUpdateEvent(topic);
+    let oldAddEventListener = event.addEventListener;
+    event.addEventListener = (callback) => { robot.getNetworkTablesValue(topic).then((value) => value != null ? callback(value) : () => {}); return oldAddEventListener(callback); };
+    return event
 }
-
-const showWaiting = () => {
-    clearTimeout(animationTimeout);
-    animationTimeout = setTimeout(() => {
-        document.getElementById("waiting-tests-prompt").style.opacity = 1;
-    }, 200);
-    document.getElementById("no-robot-prompt").style.opacity = 0;
-    document.getElementById("robot-connected").style.opacity = 0;
-    document.getElementById("running-tests").style.opacity = 0;
-    document.getElementById("tests-success").style.opacity = 0;
-    document.getElementById("tests-failure").style.opacity = 0;
-}
-
-const showConnected = () => {
-    clearTimeout(animationTimeout);
-    animationTimeout = setTimeout(() => {
-        document.getElementById("robot-connected").style.opacity = 1;
-
-    }, 200);
-    document.getElementById("waiting-tests-prompt").style.opacity = 0;
-    document.getElementById("no-robot-prompt").style.opacity = 0;
-    document.getElementById("running-tests").style.opacity = 0;
-    document.getElementById("tests-success").style.opacity = 0;
-    document.getElementById("tests-failure").style.opacity = 0;
-}
-
-const showRunning = () => {
-    clearTimeout(animationTimeout);
-    animationTimeout = setTimeout(() => {
-        document.getElementById("running-tests").style.opacity = 1;
-    }, 200);
-    document.getElementById("waiting-tests-prompt").style.opacity = 0;
-    document.getElementById("no-robot-prompt").style.opacity = 0;
-    document.getElementById("robot-connected").style.opacity = 0;
-    document.getElementById("tests-success").style.opacity = 0;
-    document.getElementById("tests-failure").style.opacity = 0;
-}
-
-const showSuccess = () => {
-    clearTimeout(animationTimeout);
-    animationTimeout = setTimeout(() => {
-        document.getElementById("tests-success").style.opacity = 1;
-    }, 200);
-    document.getElementById("waiting-tests-prompt").style.opacity = 0;
-    document.getElementById("no-robot-prompt").style.opacity = 0;
-    document.getElementById("robot-connected").style.opacity = 0;
-    document.getElementById("running-tests").style.opacity = 0;
-    document.getElementById("tests-failure").style.opacity = 0;
-}
-
-const showFailure = () => {
-    clearTimeout(animationTimeout);
-    animationTimeout = setTimeout(() => {
-        document.getElementById("tests-failure").style.opacity = 1;
-    }, 200);
-    document.getElementById("waiting-tests-prompt").style.opacity = 0;
-    document.getElementById("no-robot-prompt").style.opacity = 0;
-    document.getElementById("robot-connected").style.opacity = 0;
-    document.getElementById("running-tests").style.opacity = 0;
-    document.getElementById("tests-success").style.opacity = 0;
-}
-
-function stateToIcon(state) {
-    switch (state) {
-        case "running":
-            return "autorenew";
-        case "passed":
-            return "check";
-        case "failed":
-            return "error";
-        case "waiting":
-            return "pending";
-        default:
-            return false;
-    }
-}
-
-class Test {
-    constructor(name, state) {
-        if (!state) state = "waiting";
-        if (!stateToIcon(state)) { console.error("Invalid state for test: " + name, "       ", state); return; }
-        this.name = name;
-        this.state = state;
-
-        let testElement = document.createElement("tr");
-        let testNameElement = document.createElement("td");
-        let testStateElement = document.createElement("td");
-        let testStateIconElement = document.createElement("span");
-        testStateIconElement.classList.add("material-symbols-outlined");
-        testStateIconElement.classList.add(this.state);
-        testStateElement.appendChild(testStateIconElement);
-        testStateIconElement.innerText = stateToIcon(this.state);
-        let testTimeElement = document.createElement("td");
-        testTimeElement.innerText = "-";
-
-        testNameElement.innerText = this.name;
-        testElement.appendChild(testNameElement);
-
-        testElement.appendChild(testStateElement);
-        testElement.appendChild(testTimeElement);
-
-        document.querySelector("tbody").appendChild(testElement);
-
-        this.element = testElement;
-        this.durationElement = testTimeElement;
-        this.stateElement = testStateElement;
-        this.iconElement = testStateIconElement;
-
-        this.timeStarted = new Date().getTime();
-
-        this.timer = setInterval(() => {
-            if (this.state === "waiting") return;
-            this.updateTime();
-        }, 10);
-
-    }
-
-    setState(newState) {
-        if (!stateToIcon(newState)) return console.log("invalid state ", newState);
-        this.iconElement.classList.remove(this.state);
-        this.state = newState;
-        this.iconElement.innerText = stateToIcon(newState);
-        this.iconElement.classList.add(newState);
-
-        if(newState === "running") this.timeStarted = new Date().getTime();
-    }
-
-    setTimeElapsed(seconds) {
-        this.timeStarted = new Date().getTime() - seconds * 1000;
-    }
-
-    updateTime() {
-        if (this.state !== "running") return;
-        if (((new Date().getTime() - this.timeStarted) / 1000) > 60) {
-            let minutes = ((new Date().getTime() - this.timeStarted) / 1000 / 60).toFixed(0);
-            let seconds = ((new Date().getTime() - this.timeStarted) / 1000 % 60).toFixed(1);
-            this.durationElement.innerText = minutes + "m " + seconds + "s";
-        } else {
-            this.durationElement.innerText = ((new Date().getTime() - this.timeStarted) / 1000).toFixed(1) + "s";
-        }
-    }
-
-    destroy() {
-        this.element.remove();
-        clearInterval(this.timer);
-    }
-}
-
-function subsystemStatusToState(status) {
-    switch (status) {
-        case 0:
-            return "passed";
-        case 1:
-            return "failed";
-        case 2:
-            return "failed";
-        case 3:
-            return "running";
-        default:
-            return "waiting";
-    }
-}
-
-const parseFaultString = (subsystemName, faultString) => {
-    let severity = faultString[0];
-    let warning = severity === "0";
-    let timestamp = faultString.split(";")[1];
-    let static = faultString.split(";")[2] === "1";
-    let description = faultString.split(";")[3];
-
-    return {
-        subsystemName,
-        warning,
-        timestamp,
-        static,
-        description
-    }
-}
-
-const subsystemStatusToInt = (status) => {
-    return status === "ok" ? 0 : status === "warning" ? 1 : status === "error" ? 2 : 3;
-}
-
-const intToSubsystemStatus = (status) => {
-    return status === 0 ? "ok" : status === 1 ? "warning" : status === 2 ? "error" : "running_test";
-}
-
-
-let tests = {};
-let SubsystemList = [];
-let SubsystemStatuses = {};
-const onConnect = async () => {
-    console.log("Robot connected");
-    showConnected();
-
-    let onIsInTestUpdate = (value) => {
-        if (value) {
-            showWaiting();
-        } else {
-            showConnected();
-        }
-    }
-    robot.getTopicUpdateEvent("/Diagnostics/IsInTest").addEventListener(onIsInTestUpdate);
-    onIsInTestUpdate(await robot.getNetworkTablesValue("/Diagnostics/IsInTest"));
-
-
-    let onSubsystemListUpdate = (value) => {
-        SubsystemList = value;
-
-        for (const subsystem of SubsystemList) {
-            tests[subsystem] = new Test(subsystem);
-            let onStatusUpdate = async (status) => {
-                let faults = await robot.getNetworkTablesValue("/Diagnostics/Subsystems/" + subsystem + "/Faults");
-                status = faults.length > 0 ? 1 : subsystemStatusToInt(status);
-                SubsystemStatuses[subsystem] = status;
-                tests[subsystem].setState(subsystemStatusToState(status));
+let BatteryVoltage = [];
+let batteryVoltageChart = new Chart(document.getElementById("battery-voltage-chart"), {
+    type: 'line',
+    data: {
+        labels: Array.from({ length: 100 }, (_, i) => i),
+        datasets: [{
+            label: 'Battery Voltage',
+            data: BatteryVoltage,
+            borderColor: '#f4f436',
+            tension: 0.1,
+            pointRadius: 0,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        plugins: {
+            legend: {
+                display: false
             }
-            robot.getTopicUpdateEvent("/Diagnostics/Subsystems/" + subsystem + "/Status").addEventListener(onStatusUpdate);
-
-            let onUpdateRunning = (running) => {
-                tests[subsystem].updateTime();
-                if (running) {
-                    tests[subsystem].setState("running");
-                } else {
-                    tests[subsystem].setState(subsystemStatusToState(SubsystemStatuses[subsystem]));
+        },
+        scales: {
+            x: {
+                ticks: {
+                    color: 'rgba(0,0,0,0)'
+                },
+                grid: {
+                    color: 'rgb(70,70,70)'
+                }
+            },
+            y: {
+                ticks: {
+                    color: '#ffffff'
+                },
+                grid: {
+                    color: 'rgb(70,70,70)'
                 }
             }
-            robot.getTopicUpdateEvent("/SmartDashboard/Diagnostics/Tests/Test" + subsystem + "/running").addEventListener(onUpdateRunning);
-            robot.getNetworkTablesValue("/SmartDashboard/Diagnostics/Tests/Test" + subsystem + "/running").then(onUpdateRunning);
         }
     }
-    onSubsystemListUpdate(await robot.getNetworkTablesValue("/Diagnostics/SubsystemListTests"));
+});
 
-    let onAllRunningUpdate = async (running) => {
-        if (running) {
-            Object.values(tests).forEach(test => {
-                test.setTimeElapsed(0);
-                test.updateTime();
-                test.setState("waiting")
-            });
-            showRunning();
-        } else {
-            await new Promise(res => setTimeout(res, 1000));
-            if (Object.values(SubsystemStatuses).every(status => status === 0))
-                showSuccess();
-            else
-                showFailure();
-        }
+const onBatteryVoltageUpdate = (value) => {
+    if (value === null) return;
+
+    if(value.length !== 0) {
+        document.getElementById("battery-voltage-chart").style.display = "";
+        document.getElementById("no-data").style.display = "none";
+        batteryVoltageChart.data.datasets[0].data = value;
+        batteryVoltageChart.update();
+    } else {
+        document.getElementById("battery-voltage-chart").style.display = "none";
+        document.getElementById("no-data").style.display = "";
     }
-    robot.getTopicUpdateEvent("/Diagnostics/IsRunningTests").addEventListener(onAllRunningUpdate);
+}
 
-};
+class Alert {
+    constructor(description, type) {
+        this.description = description;
+        this.type = type;
+    }
+
+    getType() {
+        return this.type;
+    }
+
+    getDescription() {
+        return this.description;
+    }
+}
+
+const ComponentAlertTypes = {
+    INFO: 0,
+    WARNING: 1,
+    ERROR: 2
+}
+
+let Components = {};
+const onConnect = async () => {
+    console.log("Robot connected");
+
+    CustomGetTopicUpdateEvent("/SmartDashboard/DiagnosticsModule/BatteryVoltage").addEventListener(onBatteryVoltageUpdate);
+
+    // Acquire component list
+    CustomGetTopicUpdateEvent("/SmartDashboard/DiagnosticsModule/Components").addEventListener(components => {
+        Object.values(Components).forEach(component => component.componentContainer.remove());
+        Components = {};
+        components.forEach(component => {
+            Components[component] = {
+                alerts: {
+                    info: [],
+                    warning: [],
+                    error: []
+                },
+            }
+
+            Components[component].componentContainer = document.createElement("div");
+            Components[component].componentContainer.classList.add("boite");
+
+            let componentContent = document.createElement("div");
+            componentContent.classList.add("contenu");
+            Components[component].componentContainer.appendChild(componentContent);
+
+            let componentTitle = document.createElement("h2");
+            componentTitle.innerText = component;
+
+            let componentText = document.createElement("p");
+            componentText.innerText = "Pas d'alertes";
+
+            componentContent.appendChild(componentTitle);
+            componentContent.appendChild(componentText);
+
+            document.getElementById("diagnostique").appendChild(Components[component].componentContainer);
+
+            Components[component].setText = (text) => {
+                componentText.innerText = text;
+            }
+            Components[component].setComponentStatus = (status) => {
+                Components[component].componentContainer.classList.remove("erreur", "avertissement", "infos");
+
+                switch(status) { // default can safely be omitted here
+                    case ComponentAlertTypes.ERROR:
+                        Components[component].componentContainer.classList.add("erreur");
+                        break;
+                    case ComponentAlertTypes.WARNING:
+                        Components[component].componentContainer.classList.add("avertissement");
+                        break;
+                    case ComponentAlertTypes.INFO:
+                        Components[component].componentContainer.classList.add("infos");
+                        break;
+                }
+            }
+
+            const onUpdateAlerts = () => {
+                let highestSeverity = null;
+
+                let text = "";
+                if(Components[component].alerts.error.length > 0) {
+                    highestSeverity = ComponentAlertTypes.ERROR;
+                    text += "Erreurs: "+Components[component].alerts.error.length;
+                } else if(Components[component].alerts.warning.length > 0) {
+                    highestSeverity = ComponentAlertTypes.WARNING;
+                    text += "Avertissements: "+Components[component].alerts.warning.length;
+                } else if(Components[component].alerts.info.length > 0) {
+                    highestSeverity = ComponentAlertTypes.INFO;
+                    text += "Infos: "+Components[component].alerts.info.length;
+                } else {
+                    text += "No alerts";
+                }
+                Components[component].setText(text);
+                Components[component].setComponentStatus(highestSeverity);
+            }
+            CustomGetTopicUpdateEvent("/SmartDashboard/"+component+"/Alerts/infos").addEventListener(infos => onUpdateAlerts(Components[component].alerts.info = infos.map(alert => new Alert(alert, "info"))));
+            CustomGetTopicUpdateEvent("/SmartDashboard/"+component+"/Alerts/warnings").addEventListener(warnings => onUpdateAlerts(Components[component].alerts.warning = warnings.map(alert => new Alert(alert, "warning"))));
+            CustomGetTopicUpdateEvent("/SmartDashboard/"+component+"/Alerts/errors").addEventListener(errors => onUpdateAlerts(Components[component].alerts.error = errors.map(alert => new Alert(alert, "error"))));
+        });
+    });
+}
 
 const onDisconnect = (first) => {
-    if (!first) window.location.reload();
     console.log("Robot disconnected");
-    showNoRobot();
-};
+
+    if (!first) window.location.reload();
+
+}
 
 robot.onConnect.addEventListener(onConnect);
 robot.onDisconnect.addEventListener(onDisconnect);
 
 robot.isConnected() ? onConnect() : onDisconnect(true);
-
-/*
-let task1 = new Test("Test 1");
-task1.setState("running");
-task1.setTimeElapsed(-1);
-task1.updateTime();
-task1.setState("failed");
-task1.destroy();
-*/

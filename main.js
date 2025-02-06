@@ -1,6 +1,8 @@
 let DEBUG = false;
 let SECOND_SCREEN = false;
 
+const DEBUG_LOGGING = true;
+
 const { app, BrowserWindow, ipcMain } = require('electron')
 if (require('electron-squirrel-startup')) app.quit();
 
@@ -52,8 +54,11 @@ let clientListener = (entryKey, entryValue, entryValueType, callbackType, entryI
   } else if(callbackType === "update") {
     topics[entryKey].value = entryValue;
   }
+  if(DEBUG_LOGGING) {
+    console.log(`[NT] ${callbackType} ${entryKey} => ${entryValue}`);
+  }
 
-  if(entryKey === "/Diagnostics/Ready" && entryValue === true) {
+  if(entryKey === "/SmartDashboard/DiagnosticsModule/Ready" && entryValue === true) {
     BrowserWindow.getAllWindows().forEach(w => w.webContents.send("robot-connection-update", true));
   }
 
@@ -78,7 +83,7 @@ const onConnect = (isConnected, err) => {
         type: entry.typeID,
         entryID: entry.entryID
       }
-      if(key === "/Diagnostics/Ready" && entry.val === true) BrowserWindow.getAllWindows().forEach(w => w.webContents.send("robot-connection-update", true));
+      if(key === "/SmartDashboard/DiagnosticsModule/Ready" && entry.val === true) BrowserWindow.getAllWindows().forEach(w => w.webContents.send("robot-connection-update", true));
     });
   }
 }
@@ -168,6 +173,8 @@ function createSecondWindow () {
 
   secondaryWindow.setMenu(null)
   secondaryWindow.loadFile('second/index.html');
+
+  //secondaryWindow.webContents.openDevTools();
 
   secondaryWindow.on("enter-full-screen", () => secondaryWindow.webContents.send("fullscreen-update", true));
   secondaryWindow.on("leave-full-screen", () => secondaryWindow.webContents.send("fullscreen-update", false));
