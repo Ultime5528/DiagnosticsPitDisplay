@@ -112,51 +112,55 @@ const onConnect = async () => {
             let componentTitle = document.createElement("h2");
             componentTitle.innerText = component;
 
-            let componentText = document.createElement("p");
-            componentText.innerText = "Pas d'alertes";
+            let componentErrors = document.createElement("span");
+            componentErrors.classList.add("b-erreur");
+            let componentWarnings = document.createElement("span");
+            componentWarnings.classList.add("b-avertissement");
+            let componentInfos = document.createElement("span");
+            componentInfos.classList.add("b-infos");
 
             componentContent.appendChild(componentTitle);
-            componentContent.appendChild(componentText);
+
+            componentContent.appendChild(componentErrors);
+            componentContent.appendChild(componentWarnings);
+            componentContent.appendChild(componentInfos);
 
             document.getElementById("diagnostique").appendChild(Components[component].componentContainer);
 
-            Components[component].setText = (text) => {
-                componentText.innerText = text;
-            }
-            Components[component].setComponentStatus = (status) => {
-                Components[component].componentContainer.classList.remove("erreur", "avertissement", "infos");
-
-                switch(status) { // default can safely be omitted here
-                    case ComponentAlertTypes.ERROR:
-                        Components[component].componentContainer.classList.add("erreur");
-                        break;
-                    case ComponentAlertTypes.WARNING:
-                        Components[component].componentContainer.classList.add("avertissement");
-                        break;
-                    case ComponentAlertTypes.INFO:
-                        Components[component].componentContainer.classList.add("infos");
-                        break;
-                }
-            }
-
-            const onUpdateAlerts = () => {
-                let highestSeverity = null;
-
-                let text = "";
-                if(Components[component].alerts.error.length > 0) {
-                    highestSeverity = ComponentAlertTypes.ERROR;
-                    text += "Erreurs: "+Components[component].alerts.error.length;
-                } else if(Components[component].alerts.warning.length > 0) {
-                    highestSeverity = ComponentAlertTypes.WARNING;
-                    text += "Avertissements: "+Components[component].alerts.warning.length;
-                } else if(Components[component].alerts.info.length > 0) {
-                    highestSeverity = ComponentAlertTypes.INFO;
-                    text += "Infos: "+Components[component].alerts.info.length;
+            Components[component].setInfos = (count) => {
+                if(count !== 0) {
+                    componentInfos.innerHTML = "<b>"+count+"</b>Infos";
+                    componentInfos.style.display = "";
+                    Components[component].componentContainer.classList.add("infos");
                 } else {
-                    text += "No alerts";
+                    componentInfos.style.display = "none";
+                    Components[component].componentContainer.classList.remove("infos");
                 }
-                Components[component].setText(text);
-                Components[component].setComponentStatus(highestSeverity);
+            }
+            Components[component].setErrors = (count) => {
+                if(count !== 0) {
+                    componentErrors.innerHTML = "<b>"+count+"</b>Erreurs";
+                    componentErrors.style.display = "";
+                    Components[component].componentContainer.classList.add("erreur");
+                } else {
+                    componentErrors.style.display = "none";
+                    Components[component].componentContainer.classList.remove("erreur");
+                }
+            }
+            Components[component].setWarnings = (count) => {
+                if(count !== 0) {
+                    componentWarnings.innerHTML = "<b>"+count+"</b>Avertissements";
+                    componentWarnings.style.display = "";
+                    Components[component].componentContainer.classList.add("avertissement");
+                } else {
+                    componentWarnings.style.display = "none";
+                    Components[component].componentContainer.classList.remove("avertissement");
+                }
+            }
+            const onUpdateAlerts = () => {
+                Components[component].setInfos(Components[component].alerts.info.length);
+                Components[component].setWarnings(Components[component].alerts.warning.length);
+                Components[component].setErrors(Components[component].alerts.error.length);
             }
             CustomGetTopicUpdateEvent("/SmartDashboard/"+component+"/Alerts/infos").addEventListener(infos => onUpdateAlerts(Components[component].alerts.info = infos.map(alert => new Alert(alert, "info"))));
             CustomGetTopicUpdateEvent("/SmartDashboard/"+component+"/Alerts/warnings").addEventListener(warnings => onUpdateAlerts(Components[component].alerts.warning = warnings.map(alert => new Alert(alert, "warning"))));
@@ -169,7 +173,6 @@ const onDisconnect = (first) => {
     console.log("Robot disconnected");
 
     if (!first) window.location.reload();
-
 }
 
 robot.onConnect.addEventListener(onConnect);

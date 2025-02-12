@@ -1,4 +1,4 @@
-html, body{
+﻿html, body{
     /*overscroll-behavior: none;*/
     font-family: "Roboto", sans-serif;
     font-size:14px;
@@ -48,96 +48,120 @@ html, body{
   } 
 
   .diagnostique{
-    display: flex;
-    align-items: stretch;
-    flex-wrap: wrap;
+
     padding:20px;
   }
   .boite{
-    width:25%;
+    width:33.333%;
     padding:15px;
+    float:left;
   }
-  .boite.double{
-    width:50%;
+  .boite.double .contenu{
+    height:264px;
   }  
-  .boite.double > .contenu {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;    
-  }
+  .boite.double{
+    height:264px;
+  }  
+
   .boite .contenu{
-    height:265px;
+    width:100%;
+    height:117px;
     border-radius:10px;
     overflow:hidden;
     position:relative;
-    background:#ec1d23;
+    background:#030d1c;
     background: linear-gradient(-115deg, #091a35 30%, #030d1c 80%);       
+    padding:0 20px 0 20px;
+    border:1px solid #435B80;
   }
 
-  .boite .contenu p{
-    font-size:21px;
-    line-height:27px;
-    padding:20px 30px;
-    margin:0;
-    text-align:left;
-  }
   .boite .contenu h2{
     font-size:36px;
-    height:90px;
-    line-height: 90px;
-    background:#091a35;
+    line-height: 60px;
     margin:0;
-    padding:0 20px 0 30px;
-    text-align:left;
     font-weight:900;
-    text-transform: uppercase;
-  }
-  .boite .contenu h2,
-  .boite .contenu p{
-        text-shadow:#030d1c 0 2px 0;
-  }    
-  .boite .contenu h2:before{
-    content:"";
-    background:url(../images/sprite-icon-bg.svg) no-repeat;
     display:block;
-    width:60px;
-    height:60px;
+  }
+  .boite .contenu span{
+    display: none;
+    float:left;
+    height:46px;
+    background:#329669;
+    font-size:21px;
+    line-height:43px;
+    border-radius:23px;
+    padding:0 20px 0 50px;
+    margin-right:5px;
+    position:relative;
+  }
+  .boite.infos .contenu span.b-infos{
+    background:#329669;
+    display:block;
+  }  
+  .boite.avertissement .contenu span.b-avertissement{
+    background:#e29f17;
+    display:block;
+  }  
+  .boite.erreur .contenu span.b-erreur{
+    background:#ec1d23;
+    display:block;
+  }  
+  .boite .contenu span b{
+    display:inline-block;
+    font-size:36px;
+    vertical-align: middle;
+    position:relative;
+    top:-2px;
+    margin-right:8px;
+  }
+  .boite .contenu span:before{
+    display:block;
+    top:4px;
+    left:4px;
+    content:"";
+    width:38px;
+    height:38px;
+    background:url(../images/sprite-icon-bg.svg);
     background-size:180px 60px;
     position:absolute;
-    right:30px;
-    top:15px;
   }
+
+  .boite .contenu span.b-infos:before{
+    background-position:-0px 0;
+  }
+  .boite .contenu span.b-avertissement:before{
+    background-position:-38px 0;
+  }
+  .boite .contenu span.b-erreur:before{
+    background-position:-76px 0;
+  }    
+  /*
+  .boite .contenu h2 span.b-infos{
+  }    
+  .boite.infos .contenu h2 span.b-infos{
+    background:#329669;
+  }   
+  .boite .contenu h2 span.b-avertissement{
+    left:125px;
+  }    
+  .boite.avertissement .contenu h2 span.b-avertissement{
+    background:#e29f17;
+  }    
+  .boite .contenu h2 span.b-erreur{
+    left:240px;
+  }    
+  .boite.erreur .contenu h2 span.b-erreur{
+    background:#ec1d23;
+  }    
   .boite.erreur .contenu{
     background:#ec1d23;
     background: linear-gradient(-115deg, #ec1d23 20%, #a6070b 80%);    
   }
-  .boite.erreur .contenu h2{
-    background:#ec1d23;
-  }
-  .boite.erreur .contenu h2,
-  .boite.erreur .contenu p{
-        text-shadow:#a6070b 0 2px 0;
-  }  
-  .boite.erreur .contenu h2:before{
-    background-position: -120px 0;
-  }    
   .boite.avertissement .contenu{
     background:#e29f17;
     background: linear-gradient(-115deg, #e29f17 20%, #c97906 80%);    
   }
-  .boite.avertissement .contenu h2{
-    background:#e29f17;
-  } 
-  .boite.avertissement .contenu h2,
-  .boite.avertissement .contenu p{
-        text-shadow:#c97906 0 2px 0;
-  }  
-  .boite.avertissement .contenu h2:before{
-    background-position: -60px 0;
-  }    
-
+*/
 /*Mortal Kombat Skuirrel*/
   body:before{
     content:"";
