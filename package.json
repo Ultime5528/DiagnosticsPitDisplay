@@ -29,6 +29,6 @@
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.1",
-    "wpilib-nt-client": "^1.7.2"
+    "ntcore-ts-client": "^3.1.2"
   }
 }

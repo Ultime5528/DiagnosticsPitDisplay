@@ -186,7 +186,10 @@ const showDiagnostics = () => {
 
 document.getElementById("home-sidebar-btn").addEventListener("click", showHome);
 document.getElementById("diagnostics-sidebar-btn").addEventListener("click", showDiagnostics);
+let oldState = window.location.search;
 document.getElementById("settings-sidebar-btn").addEventListener("click", () => {
+    oldState = window.location.search;
+    window.history.pushState({}, "", "?settings+"+oldState);
     document.getElementById("settings-overlay").style = "opacity: 1;";
 });
 document.getElementById("debug-mode").addEventListener("change", (e) => {
@@ -196,6 +199,7 @@ document.getElementById("second-screen").addEventListener("change", (e) => {
     robot.setSecondaryScreen(e.target.checked);
 });
 document.getElementById("close-settings-btn").addEventListener("click", () => {
+    window.history.pushState({}, "", oldState);
     document.getElementById("settings-overlay").style.opacity = 0;
     setTimeout(() => {
         document.getElementById("settings-overlay").style.display = "none";
@@ -213,6 +217,9 @@ const onBatteryVoltageUpdate = (value) => {
 
     if(value.length === 0) {
         document.getElementById("battery-voltage-count").innerText = "Indisponible (Mettre le robot en test)";
+
+        batteryVoltageChart.data.datasets[0].data = value;
+        batteryVoltageChart.update();
     } else {
         document.getElementById("battery-voltage-count").innerText = value[value.length - 1];
 
@@ -409,7 +416,11 @@ robot.isConnected() ? onConnect() : onDisconnect(true);
 document.getElementById("home-sidebar-btn").style.transition = "none";
 document.getElementById("diagnostics-sidebar-btn").style.transition = "none";
 
-window.location.search.includes("home") ? showHome() : window.location.search.includes("diagnostics") ? showDiagnostics() : showHome();
+window.location.search == "?home" ? showHome() : window.location.search == "?diagnostics" ? showDiagnostics() : window.location.search.includes("settings") ? (() => {
+    window.location.search.includes("home") ? showHome() : window.location.search.includes("diagnostics") ? showDiagnostics() : showHome();
+    window.history.pushState({}, "", "?settings+"+window.location.search);
+    document.getElementById("settings-overlay").style = "opacity: 1;"
+})() : showHome();
 
 setTimeout(() => {
     document.getElementById("home-sidebar-btn").style.transition = "";

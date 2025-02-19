@@ -1,11 +1,14 @@
 let DEBUG = false;
 let SECOND_SCREEN = false;
 
-const DEBUG_LOGGING = true;
+const DEBUG_LOGGING = false;
 
 const { app, BrowserWindow, ipcMain } = require('electron')
+
 if (require('electron-squirrel-startup')) app.quit();
 
+const { NetworkTables } = require('ntcore-ts-client');
+const path = require('node:path')
 const Store = require('./store.js');
 const store = new Store({
   // We'll call our data file 'user-preferences'
@@ -32,107 +35,70 @@ ipcMain.handle("set-secondary-screen", (_, value) => {
 
 ipcMain.handle("get-secondary-screen", () => SECOND_SCREEN);
 
-const path = require('node:path')
-const ntClient = require('wpilib-nt-client');
-
-const client = new ntClient.Client();
-
-let topics = {};
+let ntcore;
+let listener;
+let connecting = true;
 let connected = false;
-let connecting = false;
-let listener
-let clientListener = (entryKey, entryValue, entryValueType, callbackType, entryID) => {
-  if(callbackType === "delete" && topics[entryKey]) delete topics[entryKey];
-  if(callbackType === "flagChange" || callbackType === "delete") return;
-
-  if(callbackType === "add") {
-    topics[entryKey] = {
-      value: entryValue,
-      type: entryValueType,
-      entryID: entryID
+let disconnect;
+let topics = {};
+const connectNT = () => {
+  ntcore = NetworkTables.getInstanceByURI(DEBUG ? "127.0.0.1" : "10.55.28.2");
+  ntcore.client.messenger.socket.stopAutoConnect();
+  listener = ntcore.addRobotConnectionListener((isConnected) => {
+    if(DEBUG_LOGGING) console.log("[NT] Connection status changed to: " + isConnected);
+    if(!connected && isConnected && connecting) {
+      connecting = false;
+      connected = true;
+      if(DEBUG_LOGGING) console.log("[NT] Connected to robot");
+      BrowserWindow.getAllWindows().forEach(win => win.webContents.send("robot-connection-update", true))
+    } else if(connected && !isConnected) {
+      connected = false;
+      if(DEBUG_LOGGING) console.log("[NT] Disconnected from robot");
+      BrowserWindow.getAllWindows().forEach(win => win.webContents.send("robot-connection-update", false))
+    } else if(connecting && !isConnected) {
+      if(DEBUG_LOGGING) console.log("[NT] Failure to connect to robot");
+      BrowserWindow.getAllWindows().forEach(win => win.webContents.send("robot-connection-update", false))
     }
-  } else if(callbackType === "update") {
-    topics[entryKey].value = entryValue;
-  }
-  if(DEBUG_LOGGING) {
-    console.log(`[NT] ${callbackType} ${entryKey} => ${entryValue}`);
-  }
-
-  if(entryKey === "/SmartDashboard/DiagnosticsModule/Ready" && entryValue === true) {
-    BrowserWindow.getAllWindows().forEach(w => w.webContents.send("robot-connection-update", true));
-  }
-
-  BrowserWindow.getAllWindows().forEach(w => w.webContents.send("topic-value-update", entryKey, entryValue));
-}
-const onConnect = (isConnected, err) => {
-  if(err && !isConnected || connected !== isConnected && !isConnected || err === "reconnect") {
-    connecting = false;
-    BrowserWindow.getAllWindows().forEach(w => w.webContents.send("robot-connection-update", false));
-    topics = {};
-    client.removeListener(listener);
-    listener = client.addListener(clientListener)
-    setTimeout(() => {client.start(onConnect, DEBUG ? "localhost" : `10.55.28.2`); connecting = true;}, 700);
-  }
-  connected = isConnected;
-  if(connected) {
-    connecting = false;
-    client.getKeys().forEach(key => {
-      const entry = client.getEntry(client.getKeyID(key));
-      topics[key] = {
-        value: entry.val,
-        type: entry.typeID,
-        entryID: entry.entryID
-      }
-      if(key === "/SmartDashboard/DiagnosticsModule/Ready" && entry.val === true) BrowserWindow.getAllWindows().forEach(w => w.webContents.send("robot-connection-update", true));
-    });
+  });
+  disconnect = () => {
+    if(connected) ntcore.client.messenger.socket.close();
   }
 }
 
-onConnect(false, "reconnect");
-
-const isConnected = () => connected;
-ipcMain.handle("is-robot-connected", isConnected)
+ipcMain.handle("is-robot-connected", () => connected);
 ipcMain.handle("debug-mode", (_, value) => {
   if(DEBUG === value) return;
-  client.removeListener(listener);
-  client.stop();
-  client.destroy();
-  topics = {};
-  onConnect(false, "reconnect");
-  DEBUG = value
+  DEBUG = value;
+  if(disconnect) disconnect();
+  connecting = true;
+  connected = false;
+  ntcore.changeURI(DEBUG ? "127.0.0.1" : "10.55.28.2");
+  ntcore.client.messenger.socket.stopAutoConnect();
   return true;
 });
 ipcMain.handle("is-debug-mode", () => DEBUG);
-ipcMain.handle("get-topic-value", async (_, topic) => {
-  if(!isConnected()) return null;
-  if(topics[topic]) return topics[topic].value;
-  try {
-    const entryID = client.getKeyID(topic);
-    const entry = client.getEntry(entryID);
-    if(entry) {
-      topics[topic] = {
-        val: entry.val,
-        type: entry.typeID,
-        entryID: entryID
+ipcMain.handle("get-topic-value", async (_, topicname) => {
+  if(DEBUG_LOGGING) console.log("[NT] get-topic-value "+topicname)
+  return await new Promise((resolve, reject) => {
+    try {
+      if(!topics[topicname]) {
+        topics[topicname] = [ntcore.createTopic(topicname), null];
+        let hasSentFirstValue = false;
+        topics[topicname][0].subscribe((value) => {
+          topics[topicname][1] = value;
+          if(DEBUG_LOGGING) console.log("[NT] topic-value-update "+topicname+" "+value)
+          BrowserWindow.getAllWindows().forEach(win => win.webContents.send("topic-value-update", topicname, value));
+          if(!hasSentFirstValue) { resolve(value); hasSentFirstValue = true; }
+        });
+      } else {
+        resolve(topics[topicname][1]);
       }
-      return entry.val;
+    } catch(e) {
+      reject(e);
     }
-  } catch(e) {
-    console.error(e);
-  }
-  console.error("(GET) Topic not found: " + topic);
-  return null;
+  });
 });
-
-ipcMain.handle("set-topic-value", async (_, topic, value) => {
-  if(!isConnected()) return null;
-  if(!topics[topic]) {
-    client.Assign(value, topic);
-    return;
-  };
-
-  client.Update(topics[topic].entryID, value);
-});
+ipcMain.handle("set-topic-value", () => console.error("Deprecated function called: set-topic-value"));
 let mainWindow;
 function createMainWindow() {
   mainWindow = new BrowserWindow({
@@ -186,6 +152,7 @@ function createSecondWindow () {
 }
 
 app.whenReady().then(() => {
+  connectNT();
   createMainWindow()
   if(SECOND_SCREEN) createSecondWindow();
 
@@ -198,9 +165,7 @@ app.whenReady().then(() => {
 })
 
 app.on('window-all-closed', function () {
-  client.removeListener(listener);
-  client.stop();
-  client.destroy();
-
+  listener();
+  disconnect();
   if (process.platform !== 'darwin') app.quit()
 })
