@@ -87,7 +87,6 @@ ipcMain.handle("get-topic-value", async (_, topicname) => {
         topics[topicname][0].subscribe((value) => {
           topics[topicname][1] = value;
           if(DEBUG_LOGGING) console.log("[NT] topic-value-update "+topicname+" "+value)
-          BrowserWindow.getAllWindows().forEach(win => win.webContents.send("topic-value-update", topicname, value));
           if(!hasSentFirstValue) { resolve(value); hasSentFirstValue = true; }
         });
       } else {
@@ -97,6 +96,17 @@ ipcMain.handle("get-topic-value", async (_, topicname) => {
       reject(e);
     }
   });
+});
+ipcMain.handle("subscribe-to-topic", (_, topicname) => {
+  if(DEBUG_LOGGING) console.log("[NT] subscribe-to-topic "+topicname)
+  if(!topics[topicname]) {
+    topics[topicname] = [ntcore.createTopic(topicname), null];
+    topics[topicname][0].subscribe((value) => {
+      topics[topicname][1] = value;
+      if(DEBUG_LOGGING) console.log("[NT] topic-value-update "+topicname+" "+value)
+      BrowserWindow.getAllWindows().forEach(win => win.webContents.send("topic-value-update", topicname, value));
+    });
+  }
 });
 ipcMain.handle("set-topic-value", () => console.error("Deprecated function called: set-topic-value"));
 let mainWindow;

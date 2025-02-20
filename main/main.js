@@ -388,6 +388,8 @@ const onConnect = async () => {
             CustomGetTopicUpdateEvent("/SmartDashboard/"+component+"/Alerts/infos").addEventListener(infos => onUpdateAlerts(Components[component].alerts.info = infos.map(alert => new Alert(alert, "info"))));
             CustomGetTopicUpdateEvent("/SmartDashboard/"+component+"/Alerts/warnings").addEventListener(warnings => onUpdateAlerts(Components[component].alerts.warning = warnings.map(alert => new Alert(alert, "warning"))));
             CustomGetTopicUpdateEvent("/SmartDashboard/"+component+"/Alerts/errors").addEventListener(errors => onUpdateAlerts(Components[component].alerts.error = errors.map(alert => new Alert(alert, "error"))));
+
+            onUpdateAlerts();
         });
     });
 
