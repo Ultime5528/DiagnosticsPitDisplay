@@ -129,7 +129,7 @@ const onConnect = async () => {
 
             Components[component].setInfos = (count) => {
                 if(count !== 0) {
-                    componentInfos.innerHTML = "<b>"+count+"</b>Infos";
+                    componentInfos.innerHTML = "<b>"+count+"</b>";
                     componentInfos.style.display = "";
                     Components[component].componentContainer.classList.add("infos");
                 } else {
@@ -139,7 +139,7 @@ const onConnect = async () => {
             }
             Components[component].setErrors = (count) => {
                 if(count !== 0) {
-                    componentErrors.innerHTML = "<b>"+count+"</b>Erreurs";
+                    componentErrors.innerHTML = "<b>"+count+"</b>";
                     componentErrors.style.display = "";
                     Components[component].componentContainer.classList.add("erreur");
                 } else {
@@ -149,7 +149,7 @@ const onConnect = async () => {
             }
             Components[component].setWarnings = (count) => {
                 if(count !== 0) {
-                    componentWarnings.innerHTML = "<b>"+count+"</b>Avertissements";
+                    componentWarnings.innerHTML = "<b>"+count+"</b>";
                     componentWarnings.style.display = "";
                     Components[component].componentContainer.classList.add("avertissement");
                 } else {

@@ -221,7 +221,7 @@ const onBatteryVoltageUpdate = (value) => {
         batteryVoltageChart.data.datasets[0].data = value;
         batteryVoltageChart.update();
     } else {
-        document.getElementById("battery-voltage-count").innerText = value[value.length - 1];
+        document.getElementById("battery-voltage-count").innerText = parseInt(value[value.length - 1]*100)/100;
 
         batteryVoltageChart.data.datasets[0].data = value;
         batteryVoltageChart.update();
