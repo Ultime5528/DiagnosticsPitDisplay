@@ -1,7 +1,7 @@
 let DEBUG = false;
 let SECOND_SCREEN = false;
 
-const DEBUG_LOGGING = true;
+const DEBUG_LOGGING = false;
 
 const { app, BrowserWindow, ipcMain } = require('electron')
 
