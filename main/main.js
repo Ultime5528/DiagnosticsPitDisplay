@@ -232,12 +232,12 @@ const onConnect = async () => {
     console.log("Robot connected");
 
     CustomGetTopicUpdateEvent("/SmartDashboard/DiagnosticsModule/BatteryVoltage").addEventListener(onBatteryVoltageUpdate);
+    CustomGetTopicUpdateEvent("/SmartDashboard/DiagnosticsModule/ComponentCount").addEventListener(value => document.getElementById("components-count").innerText = value);
 
     // Acquire component list
     CustomGetTopicUpdateEvent("/SmartDashboard/DiagnosticsModule/Components").addEventListener(components => {
         Object.values(Components).forEach(component => component.componentContainer.remove());
         Components = {};
-        document.getElementById("components-count").innerText = components.length;
         components.forEach(component => {
             Components[component] = {
                 alerts: {
