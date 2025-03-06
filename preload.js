@@ -21,12 +21,14 @@ const EventMock = () => {
 }
 
 // Create some events
+let [connectingEvent, dispatchConnectingEvent] = EventMock();
 let [connectEvent, dispatchConnectEvent] = EventMock();
 let [disconnectEvent, dispatchDisconnectEvent] = EventMock();
 
 let topicValueUpdateListeners = {};
 // Expose some APIs to be used in the renderer process
 contextBridge.exposeInMainWorld("robot", {
+    onConnecting: connectingEvent,
     onConnect: connectEvent,
     onDisconnect: disconnectEvent,
     getTopicUpdateEvent: (topic) => {
@@ -41,10 +43,11 @@ contextBridge.exposeInMainWorld("robot", {
     setNetworkTablesValue: async (key, value) => {
         return await ipcRenderer.invoke("set-topic-value", key, value);
     },
-    getNetworkTablesValue: async (key, type) => {
+    getNetworkTablesValue: async (key) => {
         return await ipcRenderer.invoke("get-topic-value", key);
     },
-    isConnected: () => lastConnected,
+    isConnected: () => lastConnected === true,
+    isConnecting: () => lastConnected === "connecting",
     setDebugMode: (value) => ipcRenderer.invoke("debug-mode", value),
     setSecondaryScreen: async (value) => await ipcRenderer.invoke("set-secondary-screen", value),
     isDebugMode: async () => await ipcRenderer.invoke("is-debug-mode"),
@@ -60,12 +63,13 @@ let lastConnected = null;
 ipcRenderer.on("robot-connection-update", (_, connected) => {
     if(lastConnected === connected) return;
 
-    if(connected) {
+    if(connected === true) {
         dispatchConnectEvent();
-    } else {
+    } else if(connected === false) {
         dispatchDisconnectEvent();
+    } else if(connected === "connecting") {
+        dispatchConnectingEvent();
     }
-
     lastConnected = connected;
 })
 

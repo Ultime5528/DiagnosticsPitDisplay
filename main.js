@@ -1,7 +1,7 @@
 let DEBUG = false;
 let SECOND_SCREEN = false;
 
-const DEBUG_LOGGING = false;
+const DEBUG_LOGGING = true;
 
 const { app, BrowserWindow, ipcMain } = require('electron')
 
@@ -37,46 +37,42 @@ ipcMain.handle("get-secondary-screen", () => SECOND_SCREEN);
 
 let ntcore;
 let listener;
-let connecting = true;
 let connected = false;
 let disconnect;
 let l;
 let topics = {};
 const listenerFunction = (isConnected) => {
   if(DEBUG_LOGGING) console.log("[NT] Connection status changed to: " + isConnected);
-  if(!connected && isConnected && connecting) {
-    connecting = false;
-    connected = true;
-    if(DEBUG_LOGGING) console.log("[NT] Connected to robot");
-    BrowserWindow.getAllWindows().forEach(win => win.webContents.send("robot-connection-update", true))
-  } else if(connected && !isConnected) {
-    connected = false;
-    if(DEBUG_LOGGING) console.log("[NT] Disconnected from robot");
-    BrowserWindow.getAllWindows().forEach(win => win.webContents.send("robot-connection-update", false))
-  } else if(connecting && !isConnected) {
-    if(DEBUG_LOGGING) console.log("[NT] Failure to connect to robot");
-    BrowserWindow.getAllWindows().forEach(win => win.webContents.send("robot-connection-update", false))
+
+  let status = {
+    isConnected: ntcore.client.messenger.socket.isConnected(),
+    isConnecting: ntcore.client.messenger.socket.isConnecting(),
+    isClosed: ntcore.client.messenger.socket.isClosed(),
+    isClosing: ntcore.client.messenger.socket.isClosing()
   }
-  if(!isConnected) {
-    if(l) clearTimeout(l);
-    if(DEBUG_LOGGING) console.log("[NT] Attempting to reconnect to robot");
-    l = setTimeout(() => {
-      l = null;
-      if(connected) return;
-      if(disconnect) disconnect();
-      connecting = true;
-      connected = false;
-      ntcore.changeURI(DEBUG ? "127.0.0.1" : "10.55.28.2");
-      ntcore.client.messenger.socket.stopAutoConnect();
-    }, 100)
+
+  if(status.isConnecting) {
+    if(DEBUG_LOGGING) console.log("[NT] Connection status is connecting");
+    connected = false;
+    BrowserWindow.getAllWindows().forEach(win => win.webContents.send("robot-connection-update", "connecting"))
+  }
+  if(status.isConnected) {
+    if(DEBUG_LOGGING) console.log("[NT] Connection status is connected");
+    connected = true;
+    BrowserWindow.getAllWindows().forEach(win => win.webContents.send("robot-connection-update", true))
+  }
+  if(status.isClosed || status.isClosing) {
+    if(DEBUG_LOGGING) console.log("[NT] Connection status is closed");
+    connected = false;
+    BrowserWindow.getAllWindows().forEach(win => win.webContents.send("robot-connection-update", false))
   }
 }
 const connectNT = () => {
-  ntcore = NetworkTables.getInstanceByURI(DEBUG ? "127.0.0.1" : "10.55.28.2");
-  ntcore.client.messenger.socket.stopAutoConnect();
-  listener = ntcore.addRobotConnectionListener(listenerFunction);
-  if(connected) ntcore.client.messenger.socket.close();
-  listenerFunction(false);
+  if(!ntcore)
+    ntcore = NetworkTables.getInstanceByURI(DEBUG ? "127.0.0.1" : "10.55.28.2");
+  ntcore.changeURI(DEBUG ? "127.0.0.1" : "10.55.28.2");
+  if(!listener)
+    listener = ntcore.addRobotConnectionListener(listenerFunction);
   disconnect = () => {
     if(connected) ntcore.client.messenger.socket.close();
   }
@@ -86,17 +82,14 @@ ipcMain.handle("is-robot-connected", () => connected);
 ipcMain.handle("debug-mode", (_, value) => {
   if(DEBUG === value) return;
   DEBUG = value;
-  if(disconnect) disconnect();
-  connecting = true;
   connected = false;
   ntcore.changeURI(DEBUG ? "127.0.0.1" : "10.55.28.2");
-  ntcore.client.messenger.socket.stopAutoConnect();
   return true;
 });
 ipcMain.handle("is-debug-mode", () => DEBUG);
-ipcMain.handle("get-topic-value", async (_, topicname) => {
+ipcMain.handle("get-topic-value", (_, topicname) => {
   if(DEBUG_LOGGING) console.log("[NT] get-topic-value "+topicname)
-  return await new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     try {
       if(!topics[topicname]) {
         topics[topicname] = [ntcore.createTopic(topicname), null];

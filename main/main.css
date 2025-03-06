@@ -118,6 +118,11 @@ body {
     color: #4CAF50;
 }
 
+#robot-status.connecting::after {
+    content: "Connection au robot (Connecting to robot)";
+    color: #1e90ff;
+}
+
 #robot-status.disconnected::after {
     content: "Robot déconnecté (Robot disconnected)";
     color: #f44336;

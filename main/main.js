@@ -397,6 +397,7 @@ const onConnect = async () => {
     document.getElementById("robot-status").classList.remove("loading");
     document.getElementById("robot-status").classList.remove("disconnected");
     document.getElementById("robot-status").classList.add("connected");
+    document.getElementById("robot-status").classList.remove("connecting");
 }
 
 const onDisconnect = (first) => {
@@ -408,12 +409,23 @@ const onDisconnect = (first) => {
     document.getElementById("robot-status").classList.remove("loading");
     document.getElementById("robot-status").classList.remove("connected");
     document.getElementById("robot-status").classList.add("disconnected");
+    document.getElementById("robot-status").classList.remove("connecting");
+    
+}
+
+const onConnecting = () => {
+    // Set bottom bar as connecting
+    document.getElementById("robot-status").classList.remove("loading");
+    document.getElementById("robot-status").classList.remove("connected");
+    document.getElementById("robot-status").classList.remove("disconnected");
+    document.getElementById("robot-status").classList.add("connecting");
 }
 
 robot.onConnect.addEventListener(onConnect);
 robot.onDisconnect.addEventListener(onDisconnect);
+robot.onConnecting.addEventListener(onConnecting)
 
-robot.isConnected() ? onConnect() : onDisconnect(true);
+robot.isConnected() ? onConnect() : robot.isConnecting() ? onConnecting() : onDisconnect(true);
 
 document.getElementById("home-sidebar-btn").style.transition = "none";
 document.getElementById("diagnostics-sidebar-btn").style.transition = "none";
