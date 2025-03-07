@@ -34,20 +34,21 @@ ipcMain.handle("set-secondary-screen", (_, value) => {
 });
 
 ipcMain.handle("get-secondary-screen", () => SECOND_SCREEN);
-
+let ntcoresim;
 let ntcore;
 let listener;
 let connected = false;
 let disconnect;
 let topics = {};
+const getNTCore = () => DEBUG ? ntcoresim : ntcore;
 const listenerFunction = (isConnected) => {
   if(DEBUG_LOGGING) console.log("[NT] Connection status changed to: " + isConnected);
 
   let status = {
-    isConnected: ntcore.client.messenger.socket.isConnected(),
-    isConnecting: ntcore.client.messenger.socket.isConnecting(),
-    isClosed: ntcore.client.messenger.socket.isClosed(),
-    isClosing: ntcore.client.messenger.socket.isClosing()
+    isConnected: getNTCore().client.messenger.socket.isConnected(),
+    isConnecting: getNTCore().client.messenger.socket.isConnecting(),
+    isClosed: getNTCore().client.messenger.socket.isClosed(),
+    isClosing: getNTCore().client.messenger.socket.isClosing()
   }
 
   if(status.isConnecting) {
@@ -66,17 +67,25 @@ const listenerFunction = (isConnected) => {
     BrowserWindow.getAllWindows().forEach(win => win.webContents.send("robot-connection-update", false))
   }
 }
-ntcore = NetworkTables.getInstanceByURI(DEBUG ? "127.0.0.1" : "10.55.28.2");
-listener = ntcore.addRobotConnectionListener(listenerFunction);
+ntcore = NetworkTables.getInstanceByURI("10.55.28.2");
+ntcoresim = NetworkTables.getInstanceByURI("127.0.0.1");
+listenerrobot = ntcore.addRobotConnectionListener(listenerFunction);
+listenersim = ntcoresim.addRobotConnectionListener(listenerFunction);
+listener = () => {
+  listenerrobot();
+  listenersim();
+}
 disconnect = () => {
   ntcore.client.messenger.socket.close();
+  ntcoresim.client.messenger.socket.close();
 }
 
-ipcMain.handle("is-robot-connected", () => ntcore.client.messenger.socket.isConnected());
+ipcMain.handle("is-robot-connected", () => getNTCore().client.messenger.socket.isConnected());
 ipcMain.handle("debug-mode", (_, value) => {
   if(DEBUG === value) return;
   DEBUG = value;
-  ntcore.changeURI(DEBUG ? "127.0.0.1" : "10.55.28.2");
+  BrowserWindow.getAllWindows().forEach(win => win.webContents.send("robot-connection-update", false));
+  listenerFunction(getNTCore().client.messenger.socket.isConnected());
   return true;
 });
 ipcMain.handle("is-debug-mode", () => DEBUG);
@@ -85,7 +94,7 @@ ipcMain.handle("get-topic-value", (_, topicname) => {
   return new Promise((resolve, reject) => {
     try {
       if(!topics[topicname]) {
-        topics[topicname] = [ntcore.createTopic(topicname), null];
+        topics[topicname] = [getNTCore().createTopic(topicname), null];
         let hasSentFirstValue = false;
         topics[topicname][0].subscribe((value) => {
           topics[topicname][1] = value;
@@ -103,7 +112,7 @@ ipcMain.handle("get-topic-value", (_, topicname) => {
 ipcMain.handle("subscribe-to-topic", (_, topicname) => {
   if(DEBUG_LOGGING) console.log("[NT] subscribe-to-topic "+topicname)
   if(!topics[topicname]) {
-    topics[topicname] = [ntcore.createTopic(topicname), null];
+    topics[topicname] = [getNTCore().createTopic(topicname), null];
     topics[topicname][0].subscribe((value) => {
       topics[topicname][1] = value;
       if(DEBUG_LOGGING) console.log("[NT] topic-value-update "+topicname+" "+value)
