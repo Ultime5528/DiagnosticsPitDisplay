@@ -1,7 +1,7 @@
 let DEBUG = false;
 let SECOND_SCREEN = false;
 
-const DEBUG_LOGGING = true;
+const DEBUG_LOGGING = false;
 
 const { app, BrowserWindow, ipcMain } = require('electron')
 
@@ -39,7 +39,6 @@ let ntcore;
 let listener;
 let connected = false;
 let disconnect;
-let l;
 let topics = {};
 const listenerFunction = (isConnected) => {
   if(DEBUG_LOGGING) console.log("[NT] Connection status changed to: " + isConnected);
@@ -67,22 +66,16 @@ const listenerFunction = (isConnected) => {
     BrowserWindow.getAllWindows().forEach(win => win.webContents.send("robot-connection-update", false))
   }
 }
-const connectNT = () => {
-  if(!ntcore)
-    ntcore = NetworkTables.getInstanceByURI(DEBUG ? "127.0.0.1" : "10.55.28.2");
-  ntcore.changeURI(DEBUG ? "127.0.0.1" : "10.55.28.2");
-  if(!listener)
-    listener = ntcore.addRobotConnectionListener(listenerFunction);
-  disconnect = () => {
-    if(connected) ntcore.client.messenger.socket.close();
-  }
+ntcore = NetworkTables.getInstanceByURI(DEBUG ? "127.0.0.1" : "10.55.28.2");
+listener = ntcore.addRobotConnectionListener(listenerFunction);
+disconnect = () => {
+  ntcore.client.messenger.socket.close();
 }
 
-ipcMain.handle("is-robot-connected", () => connected);
+ipcMain.handle("is-robot-connected", () => ntcore.client.messenger.socket.isConnected());
 ipcMain.handle("debug-mode", (_, value) => {
   if(DEBUG === value) return;
   DEBUG = value;
-  connected = false;
   ntcore.changeURI(DEBUG ? "127.0.0.1" : "10.55.28.2");
   return true;
 });
@@ -172,7 +165,6 @@ function createSecondWindow () {
 }
 
 app.whenReady().then(() => {
-  connectNT();
   createMainWindow()
   if(SECOND_SCREEN) createSecondWindow();
 

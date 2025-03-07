@@ -61,7 +61,7 @@ ipcRenderer.invoke("is-robot-connected").then(connected => {
 // Dispatch robot connection events
 let lastConnected = null;
 ipcRenderer.on("robot-connection-update", (_, connected) => {
-    if(lastConnected === connected) return;
+    if(lastConnected === connected || (lastConnected === "connecting" && connected === false)) return;
 
     if(connected === true) {
         dispatchConnectEvent();

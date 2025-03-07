@@ -1,4 +1,3 @@
-
 const CustomGetTopicUpdateEvent = (topic) => {
     const event = robot.getTopicUpdateEvent(topic);
     let oldAddEventListener = event.addEventListener;
@@ -178,4 +177,4 @@ const onDisconnect = (first) => {
 robot.onConnect.addEventListener(onConnect);
 robot.onDisconnect.addEventListener(onDisconnect);
 
-robot.isConnected() ? onConnect() : onDisconnect(true);
+robot.isConnected() ? onConnect() : !robot.isConnecting() ? onDisconnect(true) : null;
