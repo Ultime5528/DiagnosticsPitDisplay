@@ -73,6 +73,11 @@ ipcRenderer.on("robot-connection-update", (_, connected) => {
     lastConnected = connected;
 })
 
+// Receive topic value updates
+ipcRenderer.on("topic-value-update", (_, topic, value) => {
+    if(topicValueUpdateListeners[topic]) topicValueUpdateListeners[topic][1](value);
+})
+
 // Fullscreen handling
 document.addEventListener('DOMContentLoaded', () => {
     let fullscreen = false;

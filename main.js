@@ -162,7 +162,7 @@ function createSecondWindow () {
   secondaryWindow.setMenu(null)
   secondaryWindow.loadFile('second/index.html');
 
-  //secondaryWindow.webContents.openDevTools();
+  secondaryWindow.webContents.openDevTools();
 
   secondaryWindow.on("enter-full-screen", () => secondaryWindow.webContents.send("fullscreen-update", true));
   secondaryWindow.on("leave-full-screen", () => secondaryWindow.webContents.send("fullscreen-update", false));
