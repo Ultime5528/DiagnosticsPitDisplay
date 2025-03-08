@@ -40,9 +40,6 @@ contextBridge.exposeInMainWorld("robot", {
 
         return topicValueUpdateListeners[topic][0];
     },
-    setNetworkTablesValue: async (key, value) => {
-        return await ipcRenderer.invoke("set-topic-value", key, value);
-    },
     getNetworkTablesValue: async (key) => {
         return await ipcRenderer.invoke("get-topic-value", key);
     },

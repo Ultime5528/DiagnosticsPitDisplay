@@ -1,12 +1,5 @@
-let DEBUG = false;
-let SECOND_SCREEN = false;
-
-const DEBUG_LOGGING = false;
-
 const { app, BrowserWindow, ipcMain } = require('electron')
-
 if (require('electron-squirrel-startup')) app.quit();
-
 const { NetworkTables } = require('ntcore-ts-client');
 const path = require('node:path')
 const Store = require('./store.js');
@@ -17,8 +10,22 @@ const store = new Store({
     secondScreen: false
   }
 });
-SECOND_SCREEN = store.get("secondScreen");
 
+let DEBUG = false;
+let SECOND_SCREEN = store.get("secondScreen");
+
+const DEBUG_LOGGING = true;
+
+ipcMain.handle("get-version", () => process.env.npm_package_version);
+ipcMain.handle("is-debug-mode", () => DEBUG);
+ipcMain.handle("debug-mode", (_, value) => {
+  if(DEBUG === value) return;
+  DEBUG = value;
+  BrowserWindow.getAllWindows().forEach(win => win.webContents.send("robot-connection-update", false));
+  listenerFunction(getNTCore().client.messenger.socket.isConnected());
+  return true;
+});
+ipcMain.handle("get-secondary-screen", () => SECOND_SCREEN);
 ipcMain.handle("set-secondary-screen", (_, value) => {
   if(SECOND_SCREEN === value) return;
   SECOND_SCREEN = value;
@@ -29,18 +36,12 @@ ipcMain.handle("set-secondary-screen", (_, value) => {
     secondaryWindow.close();
     secondaryWindow = null;
   }
-  
   return true;
 });
 
-ipcMain.handle("get-secondary-screen", () => SECOND_SCREEN);
-let ntcoresim;
-let ntcore;
-let listener;
-let connected = false;
-let disconnect;
+
 let topics = {};
-const getNTCore = () => DEBUG ? ntcoresim : ntcore;
+
 const listenerFunction = (isConnected) => {
   if(DEBUG_LOGGING) console.log("[NT] Connection status changed to: " + isConnected);
 
@@ -67,28 +68,21 @@ const listenerFunction = (isConnected) => {
     BrowserWindow.getAllWindows().forEach(win => win.webContents.send("robot-connection-update", false))
   }
 }
-ntcore = NetworkTables.getInstanceByURI("10.55.28.2");
-ntcoresim = NetworkTables.getInstanceByURI("127.0.0.1");
-listenerrobot = ntcore.addRobotConnectionListener(listenerFunction);
-listenersim = ntcoresim.addRobotConnectionListener(listenerFunction);
-listener = () => {
+const getNTCore = () => DEBUG ? ntcoresim : ntcore;
+let ntcore = NetworkTables.getInstanceByURI("10.55.28.2");
+let ntcoresim = NetworkTables.getInstanceByURI("127.0.0.1");
+let listenerrobot = ntcore.addRobotConnectionListener(listenerFunction);
+let listenersim = ntcoresim.addRobotConnectionListener(listenerFunction);
+let listener = () => {
   listenerrobot();
   listenersim();
 }
-disconnect = () => {
+let disconnect = () => {
   ntcore.client.messenger.socket.close();
   ntcoresim.client.messenger.socket.close();
 }
 
 ipcMain.handle("is-robot-connected", () => getNTCore().client.messenger.socket.isConnected());
-ipcMain.handle("debug-mode", (_, value) => {
-  if(DEBUG === value) return;
-  DEBUG = value;
-  BrowserWindow.getAllWindows().forEach(win => win.webContents.send("robot-connection-update", false));
-  listenerFunction(getNTCore().client.messenger.socket.isConnected());
-  return true;
-});
-ipcMain.handle("is-debug-mode", () => DEBUG);
 ipcMain.handle("get-topic-value", (_, topicname) => {
   if(DEBUG_LOGGING) console.log("[NT] get-topic-value "+topicname)
   return new Promise((resolve, reject) => {
@@ -120,7 +114,6 @@ ipcMain.handle("subscribe-to-topic", (_, topicname) => {
     });
   }
 });
-ipcMain.handle("set-topic-value", () => console.error("Deprecated function called: set-topic-value"));
 let mainWindow;
 function createMainWindow() {
   mainWindow = new BrowserWindow({
@@ -146,7 +139,7 @@ function createMainWindow() {
 let secondaryWindow;
 ipcMain.on("exit-fullscreen", () => {if(secondaryWindow) secondaryWindow.setFullScreen(false)});
 ipcMain.on("enter-fullscreen", () => {if(secondaryWindow) secondaryWindow.setFullScreen(true)});
-function createSecondWindow () {
+function createSecondWindow() {
   secondaryWindow = new BrowserWindow({
     width: 800,
     height: 600,
@@ -161,8 +154,7 @@ function createSecondWindow () {
 
   secondaryWindow.setMenu(null)
   secondaryWindow.loadFile('second/index.html');
-
-  secondaryWindow.webContents.openDevTools();
+  //secondaryWindow.webContents.openDevTools();
 
   secondaryWindow.on("enter-full-screen", () => secondaryWindow.webContents.send("fullscreen-update", true));
   secondaryWindow.on("leave-full-screen", () => secondaryWindow.webContents.send("fullscreen-update", false));
@@ -190,3 +182,5 @@ app.on('window-all-closed', function () {
   disconnect();
   if (process.platform !== 'darwin') app.quit()
 })
+
+console.log("Launching DiagnosticsPitDisplay v"+process.env.npm_package_version);

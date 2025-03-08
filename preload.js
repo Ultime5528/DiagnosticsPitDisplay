@@ -40,9 +40,6 @@ contextBridge.exposeInMainWorld("robot", {
 
         return topicValueUpdateListeners[topic][0];
     },
-    setNetworkTablesValue: async (key, value) => {
-        return await ipcRenderer.invoke("set-topic-value", key, value);
-    },
     getNetworkTablesValue: async (key) => {
         return await ipcRenderer.invoke("get-topic-value", key);
     },
@@ -77,3 +74,9 @@ ipcRenderer.on("robot-connection-update", (_, connected) => {
 ipcRenderer.on("topic-value-update", (_, topic, value) => {
     if(topicValueUpdateListeners[topic]) topicValueUpdateListeners[topic][1](value);
 })
+
+document.addEventListener('DOMContentLoaded', () => {
+    ipcRenderer.invoke("get-version").then(version => {
+        document.getElementById("version").innerText = "v"+version;
+    })
+});
