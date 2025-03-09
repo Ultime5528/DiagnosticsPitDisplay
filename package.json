@@ -1,12 +1,12 @@
 {
   "name": "diagnostics-pit-display",
-  "version": "1.1.10",
+  "version": "1.2.0",
   "description": "Diagnostics Pit Display for FRC Team 5528",
   "main": "main.js",
   "scripts": {
     "start": "electron main.js",
-    "package": "electron-forge package",
-    "make": "electron-forge make"
+    "package": "electron-builder --dir",
+    "make": "electron-builder"
   },
   "keywords": [
     "frc",
@@ -16,19 +16,49 @@
   ],
   "author": "Ultime 5528",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ultime5528/DiagnosticsPitDisplay.git"
+  },
   "devDependencies": {
-    "@electron-forge/cli": "^7.5.0",
-    "@electron-forge/maker-deb": "^7.5.0",
-    "@electron-forge/maker-rpm": "^7.5.0",
-    "@electron-forge/maker-squirrel": "^7.5.0",
-    "@electron-forge/maker-zip": "^7.5.0",
-    "@electron-forge/plugin-auto-unpack-natives": "^7.5.0",
-    "@electron-forge/plugin-fuses": "^7.5.0",
-    "@electron/fuses": "^1.8.0",
-    "electron": "^32.1.2"
+    "electron": "^32.1.2",
+    "electron-builder": "^25.1.8"
   },
   "dependencies": {
+    "electron-builder-squirrel-windows": "^25.1.8",
     "electron-squirrel-startup": "^1.0.1",
     "ntcore-ts-client": "^3.1.2"
+  },
+  "build": {
+    "appId": "com.ultime5528.diagnosticspitdisplay",
+    "icon": "icons/icon.png",
+    "copyright": "Copyright (c) 2025 Ultime 5528",
+    "appImage": {
+      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+      "category": "Developer Tools",
+      "description": "Diagnostics Pit Display for FRC Team 5528"
+    },
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "darkModeSupport": true,
+      "icon": "icons/icon.icns",
+      "target": [
+        "default"
+      ]
+    },
+    "squirrelWindows": {
+      "iconUrl": "https://raw.githubusercontent.com/Ultime5528/DiagnosticsPitDisplay/refs/heads/main/icons/icon.ico",
+      "loadingGif": "icons/loading.gif"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ]
+    },
+    "win": {
+      "target": [
+        "squirrel"
+      ]
+    }
   }
 }

@@ -16,7 +16,7 @@ let SECOND_SCREEN = store.get("secondScreen");
 
 const DEBUG_LOGGING = true;
 
-ipcMain.handle("get-version", () => process.env.npm_package_version);
+ipcMain.handle("get-version", () => require('./package.json').version);
 ipcMain.handle("is-debug-mode", () => DEBUG);
 ipcMain.handle("debug-mode", (_, value) => {
   if(DEBUG === value) return;
