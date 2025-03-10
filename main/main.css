@@ -119,7 +119,7 @@ body {
 }
 
 #robot-status.connecting::after {
-    content: "Connection au robot (Connecting to robot)";
+    content: "Connexion au robot (Connecting to robot)";
     color: #1e90ff;
 }
 
