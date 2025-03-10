@@ -426,21 +426,11 @@ robot.onDisconnect.addEventListener(onDisconnect);
 robot.onConnecting.addEventListener(onConnecting)
 
 robot.isConnected() ? onConnect() : robot.isConnecting() ? onConnecting() : onDisconnect(true);
-
-document.getElementById("home-sidebar-btn").style.transition = "none";
-document.getElementById("diagnostics-sidebar-btn").style.transition = "none";
-
 window.location.search == "?home" ? showHome() : window.location.search == "?diagnostics" ? showDiagnostics() : window.location.search.includes("settings") ? (() => {
     window.location.search.includes("home") ? showHome() : window.location.search.includes("diagnostics") ? showDiagnostics() : showHome();
     window.history.pushState({}, "", "?settings+"+window.location.search);
     document.getElementById("settings-overlay").style = "opacity: 1;"
 })() : showHome();
-
-setTimeout(() => {
-    document.getElementById("home-sidebar-btn").style.transition = "";
-    document.getElementById("diagnostics-sidebar-btn").style.transition = "";
-}, 200)
-
 robot.isDebugMode().then(debug => {
     document.getElementById("debug-mode").checked = debug;
 });

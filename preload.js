@@ -1,6 +1,6 @@
 const { ipcRenderer, contextBridge } = require('electron');
 
-// Event Class that does exactly what we need.
+// BEGIN NT API
 const EventMock = () => {
     let listeners = [];
 
@@ -74,6 +74,7 @@ ipcRenderer.on("robot-connection-update", (_, connected) => {
 ipcRenderer.on("topic-value-update", (_, topic, value) => {
     if(topicValueUpdateListeners[topic]) topicValueUpdateListeners[topic][1](value);
 })
+// END NT API
 
 document.addEventListener('DOMContentLoaded', () => {
     ipcRenderer.invoke("get-version").then(version => {

@@ -14,8 +14,6 @@ const store = new Store({
 let DEBUG = false;
 let SECOND_SCREEN = store.get("secondScreen");
 
-const DEBUG_LOGGING = true;
-
 ipcMain.handle("get-version", () => require('./package.json').version);
 ipcMain.handle("is-debug-mode", () => DEBUG);
 ipcMain.handle("debug-mode", (_, value) => {
@@ -43,7 +41,7 @@ ipcMain.handle("set-secondary-screen", (_, value) => {
 let topics = {};
 
 const listenerFunction = (isConnected) => {
-  if(DEBUG_LOGGING) console.log("[NT] Connection status changed to: " + isConnected);
+  console.log("[NT] Connection status changed to: " + isConnected);
 
   let status = {
     isConnected: getNTCore().client.messenger.socket.isConnected(),
@@ -53,17 +51,17 @@ const listenerFunction = (isConnected) => {
   }
 
   if(status.isConnecting) {
-    if(DEBUG_LOGGING) console.log("[NT] Connection status is connecting");
+    console.log("[NT] Connection status is connecting");
     connected = false;
     BrowserWindow.getAllWindows().forEach(win => win.webContents.send("robot-connection-update", "connecting"))
   }
   if(status.isConnected) {
-    if(DEBUG_LOGGING) console.log("[NT] Connection status is connected");
+    console.log("[NT] Connection status is connected");
     connected = true;
     BrowserWindow.getAllWindows().forEach(win => win.webContents.send("robot-connection-update", true))
   }
   if(status.isClosed || status.isClosing) {
-    if(DEBUG_LOGGING) console.log("[NT] Connection status is closed");
+    console.log("[NT] Connection status is closed");
     connected = false;
     BrowserWindow.getAllWindows().forEach(win => win.webContents.send("robot-connection-update", false))
   }
@@ -84,7 +82,7 @@ let disconnect = () => {
 
 ipcMain.handle("is-robot-connected", () => getNTCore().client.messenger.socket.isConnected());
 ipcMain.handle("get-topic-value", (_, topicname) => {
-  if(DEBUG_LOGGING) console.log("[NT] get-topic-value "+topicname)
+  console.log("[NT] get-topic-value "+topicname)
   return new Promise((resolve, reject) => {
     try {
       if(!topics[topicname]) {
@@ -92,7 +90,7 @@ ipcMain.handle("get-topic-value", (_, topicname) => {
         let hasSentFirstValue = false;
         topics[topicname][0].subscribe((value) => {
           topics[topicname][1] = value;
-          if(DEBUG_LOGGING) console.log("[NT] topic-value-update "+topicname+" "+value)
+          console.log("[NT] topic-value-update "+topicname+" "+value)
           if(!hasSentFirstValue) { resolve(value); hasSentFirstValue = true; }
         });
       } else {
@@ -104,12 +102,12 @@ ipcMain.handle("get-topic-value", (_, topicname) => {
   });
 });
 ipcMain.handle("subscribe-to-topic", (_, topicname) => {
-  if(DEBUG_LOGGING) console.log("[NT] subscribe-to-topic "+topicname)
+  console.log("[NT] subscribe-to-topic "+topicname)
   if(!topics[topicname]) {
     topics[topicname] = [getNTCore().createTopic(topicname), null];
     topics[topicname][0].subscribe((value) => {
       topics[topicname][1] = value;
-      if(DEBUG_LOGGING) console.log("[NT] topic-value-update "+topicname+" "+value)
+      console.log("[NT] topic-value-update "+topicname+" "+value)
       BrowserWindow.getAllWindows().forEach(win => win.webContents.send("topic-value-update", topicname, value));
     });
   }
@@ -183,4 +181,4 @@ app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit()
 })
 
-console.log("Launching DiagnosticsPitDisplay v"+process.env.npm_package_version);
+console.log("Launching DiagnosticsPitDisplay v"+require('./package.json').version);

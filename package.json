@@ -33,22 +33,19 @@
     "appId": "com.ultime5528.diagnosticspitdisplay",
     "icon": "icons/icon.png",
     "copyright": "Copyright (c) 2025 Ultime 5528",
-    "appImage": {
-      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
-      "category": "Developer Tools",
-      "description": "Diagnostics Pit Display for FRC Team 5528"
+    "extraMetadata": {
+      "productName": "Diagnostics Pit Display"
+    },
+    "squirrelWindows": {
+      "iconUrl": "https://raw.githubusercontent.com/Ultime5528/DiagnosticsPitDisplay/refs/heads/main/icons/icon.ico",
+      "loadingGif": "icons/loading.gif"
     },
     "mac": {
-      "category": "public.app-category.developer-tools",
       "darkModeSupport": true,
       "icon": "icons/icon.icns",
       "target": [
         "default"
       ]
-    },
-    "squirrelWindows": {
-      "iconUrl": "https://raw.githubusercontent.com/Ultime5528/DiagnosticsPitDisplay/refs/heads/main/icons/icon.ico",
-      "loadingGif": "icons/loading.gif"
     },
     "linux": {
       "target": [

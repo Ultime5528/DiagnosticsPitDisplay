@@ -201,24 +201,4 @@
     100%{bottom:-160px}
   }
 
-  #fullscreen {
-    position: fixed;
-    z-index: 100;
-    bottom: 20px;
-    right: 20px;
-    background-color: rgba(0,0,0,0);
-    color: rgba(120,120,120,1);
-    font-size: 2em;
-    border: 0;
-    cursor: pointer;
-    opacity: 0;
-    transition: 0.2s linear opacity;
-}
-
-#fullscreen:focus {
-    outline:none;
-}
-
-#fullscreen:hover {
-    opacity: 1;
-}
+  

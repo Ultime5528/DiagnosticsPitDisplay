@@ -1,6 +1,6 @@
 const { ipcRenderer, contextBridge } = require('electron');
 
-// Event Class that does exactly what we need.
+// BEGIN NT API
 const EventMock = () => {
     let listeners = [];
 
@@ -74,26 +74,57 @@ ipcRenderer.on("robot-connection-update", (_, connected) => {
 ipcRenderer.on("topic-value-update", (_, topic, value) => {
     if(topicValueUpdateListeners[topic]) topicValueUpdateListeners[topic][1](value);
 })
+// END NT API
+
+let fullscreen_obj = document.createElement("button");
+fullscreen_obj.id = "fullscreen";
+let icon = document.createElement("span");
+icon.className = "material-symbols-outlined";
+fullscreen_obj.appendChild(icon);
+let style = document.createElement("style");
+style.innerHTML = `#fullscreen {
+    position: fixed;
+    z-index: 100;
+    bottom: 20px;
+    right: 20px;
+    background-color: rgba(0,0,0,0);
+    color: rgba(120,120,120,1);
+    font-size: 2em;
+    border: 0;
+    cursor: pointer;
+    opacity: 0;
+    transition: 0.2s linear opacity;
+}
+
+#fullscreen:focus {
+    outline:none;
+}
+
+#fullscreen:hover {
+    opacity: 1;
+}`;
 
 // Fullscreen handling
 document.addEventListener('DOMContentLoaded', () => {
+    document.body.appendChild(fullscreen_obj);
+    document.head.appendChild(style);
+
     let fullscreen = false;
 
     ipcRenderer.on("fullscreen-update", (_, state) => {
         fullscreen = state;
         updateFullScreenIcon();
     });
-
+    
     const updateFullScreenIcon = () => {
-        if(fullscreen) {
-            document.querySelector("#fullscreen > span").innerText = "fullscreen_exit";
-        } else {
-            document.querySelector("#fullscreen > span").innerText = "fullscreen";
-        }
+        if(fullscreen)
+            icon.innerText = "fullscreen_exit";
+         else 
+            icon.innerText = "fullscreen";
     }
 
     document.getElementById('fullscreen').addEventListener('click', () => {
-        if(fullscreen) 
+        if(fullscreen)
             ipcRenderer.send('exit-fullscreen');
         else
             ipcRenderer.send('enter-fullscreen');
