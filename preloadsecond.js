@@ -35,7 +35,6 @@ contextBridge.exposeInMainWorld("robot", {
         ipcRenderer.invoke("subscribe-to-topic", topic);
         if(!topicValueUpdateListeners[topic]) {
             topicValueUpdateListeners[topic] = EventMock();
-            return topicValueUpdateListeners[topic][0];
         }
 
         return topicValueUpdateListeners[topic][0];

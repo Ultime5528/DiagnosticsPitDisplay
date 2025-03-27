@@ -327,3 +327,11 @@ input[type="checkbox"]:checked {
     display: flex;
     justify-content: space-between;    
 }
+button {
+    background-color: rgb(50, 50, 50);
+    padding: 10px;
+    margin: 10px;
+    border: none;
+    color: white;
+    border-radius: 6px;
+}

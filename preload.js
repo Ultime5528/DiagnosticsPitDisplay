@@ -24,6 +24,8 @@ const EventMock = () => {
 let [connectingEvent, dispatchConnectingEvent] = EventMock();
 let [connectEvent, dispatchConnectEvent] = EventMock();
 let [disconnectEvent, dispatchDisconnectEvent] = EventMock();
+let [showAboutEvent, dispatchShowAboutEvent] = EventMock();
+let [exportRequestEvent, dispatchExportRequestEvent] = EventMock();
 
 let topicValueUpdateListeners = {};
 // Expose some APIs to be used in the renderer process
@@ -31,11 +33,12 @@ contextBridge.exposeInMainWorld("robot", {
     onConnecting: connectingEvent,
     onConnect: connectEvent,
     onDisconnect: disconnectEvent,
+    onShowAbout: showAboutEvent,
+    onExportRequest: exportRequestEvent,
     getTopicUpdateEvent: (topic) => {
         ipcRenderer.invoke("subscribe-to-topic", topic);
         if(!topicValueUpdateListeners[topic]) {
             topicValueUpdateListeners[topic] = EventMock();
-            return topicValueUpdateListeners[topic][0];
         }
 
         return topicValueUpdateListeners[topic][0];
@@ -48,7 +51,7 @@ contextBridge.exposeInMainWorld("robot", {
     setDebugMode: (value) => ipcRenderer.invoke("debug-mode", value),
     setSecondaryScreen: async (value) => await ipcRenderer.invoke("set-secondary-screen", value),
     isDebugMode: async () => await ipcRenderer.invoke("is-debug-mode"),
-    getSecondaryScreen: async () => await ipcRenderer.invoke("get-secondary-screen")
+    getSecondaryScreen: async () => await ipcRenderer.invoke("get-secondary-screen"),
 })
 
 ipcRenderer.invoke("is-robot-connected").then(connected => {
@@ -70,11 +73,17 @@ ipcRenderer.on("robot-connection-update", (_, connected) => {
     lastConnected = connected;
 })
 
+ipcRenderer.on("show-about", () => {
+    dispatchShowAboutEvent();
+})
+
 // Receive topic value updates
 ipcRenderer.on("topic-value-update", (_, topic, value) => {
     if(topicValueUpdateListeners[topic]) topicValueUpdateListeners[topic][1](value);
 })
 // END NT API
+
+ipcRenderer.on("export-all", async () => dispatchExportRequestEvent())
 
 document.addEventListener('DOMContentLoaded', () => {
     ipcRenderer.invoke("get-version").then(version => {

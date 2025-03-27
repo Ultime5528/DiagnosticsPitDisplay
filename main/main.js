@@ -183,15 +183,17 @@ const showDiagnostics = () => {
     document.getElementById("home-sidebar-btn").classList.remove("active");
     document.getElementById("diagnostics-sidebar-btn").classList.add("active");
 }
-
-document.getElementById("home-sidebar-btn").addEventListener("click", showHome);
-document.getElementById("diagnostics-sidebar-btn").addEventListener("click", showDiagnostics);
 let oldState = window.location.search;
-document.getElementById("settings-sidebar-btn").addEventListener("click", () => {
+const showSettings = () => {
     oldState = window.location.search;
     window.history.pushState({}, "", "?settings+"+oldState);
     document.getElementById("settings-overlay").style = "opacity: 1;";
-});
+}
+
+document.getElementById("home-sidebar-btn").addEventListener("click", showHome);
+document.getElementById("diagnostics-sidebar-btn").addEventListener("click", showDiagnostics);
+document.getElementById("settings-sidebar-btn").addEventListener("click", showSettings);
+
 document.getElementById("debug-mode").addEventListener("change", (e) => {
     robot.setDebugMode(e.target.checked);
 });
@@ -437,3 +439,37 @@ robot.isDebugMode().then(debug => {
 robot.getSecondaryScreen().then(secondary => {
     document.getElementById("second-screen").checked = secondary;
 });
+robot.onShowAbout.addEventListener(showSettings);
+function saveFile(content, filename, contenttype) {
+    const element = document.createElement("a");
+    const file = new Blob([content], {type: contenttype});
+    element.href = URL.createObjectURL(file);
+    element.download = filename;
+    element.click();
+}
+
+robot.onExportRequest.addEventListener(async () => {
+    let alerts = {}
+
+    Object.keys(Components).forEach((componentName) => {
+        alerts[componentName] = []
+        let insertFunc = (alert) => {
+            alerts[componentName].push({
+                type: alert.getType(),
+                description: alert.getDescription()
+            })
+        };
+        Components[componentName].alerts.info.forEach(insertFunc);
+        Components[componentName].alerts.error.forEach(insertFunc);
+        Components[componentName].alerts.warning.forEach(insertFunc);
+    })
+
+    saveFile(JSON.stringify({
+        componentCount: Object.keys(Components).length,
+        components: Object.keys(Components),
+        status: robot.isConnected() ? "connected" : "disconnected",
+        simulation: await robot.isDebugMode(),
+        alerts: alerts,
+        batteryVoltage: batteryVoltageChart.data.datasets[0].data,
+    }), "DiagnosticsPitDisplayDump-"+(new Date().toLocaleString())+".json", "application/json")
+})

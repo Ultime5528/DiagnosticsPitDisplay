@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron')
+const { app, BrowserWindow, ipcMain, Menu } = require('electron')
 if (require('electron-squirrel-startup')) app.quit();
 const { NetworkTables } = require('ntcore-ts-client');
 const path = require('node:path')
@@ -125,9 +125,33 @@ function createMainWindow() {
     icon: path.join(__dirname, "icons", 'icon.png'),
   })
 
-  mainWindow.setMenu(null)
+  let menu = [
+    {
+      label: "File",
+      submenu: [
+        {
+          label: "About",
+          click: () => mainWindow.webContents.send("show-about")
+        },
+        {
+          label: "Exit",
+          click: () => app.quit()
+        }
+      ]
+    },
+    {
+      label: "Export",
+      submenu: [
+        {
+          label: "Export all",
+          click: () => mainWindow.webContents.send("export-all")
+        },
+      ]
+    }
+  ]
+  mainWindow.setMenu(Menu.buildFromTemplate(menu))
   mainWindow.loadFile('main/index.html');
-  //mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools();
 
   mainWindow.on("closed", () => {
     mainWindow = null;
