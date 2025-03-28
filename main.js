@@ -11,6 +11,14 @@ const store = new Store({
   }
 });
 
+let oldConsoleLog = console.log;
+let logs = [];
+console.log = (...args) => {
+  if(mainWindow) mainWindow.webContents.send("log", ...args);
+  logs.push("[LOG - "+(new Date().toLocaleString())+"] "+args.join(" "));
+  oldConsoleLog(...args);
+}
+
 let DEBUG = false;
 let SECOND_SCREEN = store.get("secondScreen");
 
@@ -134,24 +142,44 @@ function createMainWindow() {
           click: () => mainWindow.webContents.send("show-about")
         },
         {
+          label: "Settings",
+          click: () => mainWindow.webContents.send("show-about")
+        },
+        {
           label: "Exit",
           click: () => app.quit()
         }
       ]
     },
+    
     {
-      label: "Export",
+      label: "Developper",
       submenu: [
         {
-          label: "Export all",
-          click: () => mainWindow.webContents.send("export-all")
+          label: "Toggle devtools",
+          click: () => {
+            mainWindow.webContents.toggleDevTools();
+            if(secondaryWindow) secondaryWindow.webContents.toggleDevTools();
+          }
+        },
+        {
+          label: "Export",
+          submenu: [
+            {
+              label: "Export dump",
+              click: () => mainWindow.webContents.send("export-all")
+            },
+            {
+              label: "Export logs",
+              click: () => mainWindow.webContents.send("export-logs", logs)
+            },
+          ]
         },
       ]
     }
   ]
   mainWindow.setMenu(Menu.buildFromTemplate(menu))
   mainWindow.loadFile('main/index.html');
-  //mainWindow.webContents.openDevTools();
 
   mainWindow.on("closed", () => {
     mainWindow = null;
@@ -176,7 +204,6 @@ function createSecondWindow() {
 
   secondaryWindow.setMenu(null)
   secondaryWindow.loadFile('second/index.html');
-  //secondaryWindow.webContents.openDevTools();
 
   secondaryWindow.on("enter-full-screen", () => secondaryWindow.webContents.send("fullscreen-update", true));
   secondaryWindow.on("leave-full-screen", () => secondaryWindow.webContents.send("fullscreen-update", false));

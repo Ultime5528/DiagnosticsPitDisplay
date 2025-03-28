@@ -229,8 +229,11 @@ const onBatteryVoltageUpdate = (value) => {
         batteryVoltageChart.update();
     }
 }
-
+let first = true;
 const onConnect = async () => {
+    if(!first) window.location.reload();
+    first = false;
+    
     console.log("Robot connected");
 
     CustomGetTopicUpdateEvent("/SmartDashboard/DiagnosticsModule/BatteryVoltage").addEventListener(onBatteryVoltageUpdate);
@@ -402,10 +405,8 @@ const onConnect = async () => {
     document.getElementById("robot-status").classList.remove("connecting");
 }
 
-const onDisconnect = (first) => {
+const onDisconnect = () => {
     console.log("Robot disconnected");
-
-    if (!first) window.location.reload();
 
     // Set bottom bar as disconnected
     document.getElementById("robot-status").classList.remove("loading");
@@ -427,7 +428,7 @@ robot.onConnect.addEventListener(onConnect);
 robot.onDisconnect.addEventListener(onDisconnect);
 robot.onConnecting.addEventListener(onConnecting)
 
-robot.isConnected() ? onConnect() : robot.isConnecting() ? onConnecting() : onDisconnect(true);
+robot.isConnected() ? onConnect() : robot.isConnecting() ? onConnecting() : onDisconnect();
 window.location.search == "?home" ? showHome() : window.location.search == "?diagnostics" ? showDiagnostics() : window.location.search.includes("settings") ? (() => {
     window.location.search.includes("home") ? showHome() : window.location.search.includes("diagnostics") ? showDiagnostics() : showHome();
     window.history.pushState({}, "", "?settings+"+window.location.search);
@@ -440,6 +441,7 @@ robot.getSecondaryScreen().then(secondary => {
     document.getElementById("second-screen").checked = secondary;
 });
 robot.onShowAbout.addEventListener(showSettings);
+
 function saveFile(content, filename, contenttype) {
     const element = document.createElement("a");
     const file = new Blob([content], {type: contenttype});
@@ -447,7 +449,7 @@ function saveFile(content, filename, contenttype) {
     element.download = filename;
     element.click();
 }
-
+robot.onExportLogsRequest.addEventListener(async (logs) => {console.log(logs); saveFile(logs.join("\n"), "DiagnosticsPitDisplayLogs-"+(new Date().toLocaleString())+".txt", "text/plain")});
 robot.onExportRequest.addEventListener(async () => {
     let alerts = {}
 
@@ -471,5 +473,5 @@ robot.onExportRequest.addEventListener(async () => {
         simulation: await robot.isDebugMode(),
         alerts: alerts,
         batteryVoltage: batteryVoltageChart.data.datasets[0].data,
-    }), "DiagnosticsPitDisplayDump-"+(new Date().toLocaleString())+".json", "application/json")
+    }, null, 4), "DiagnosticsPitDisplayDump-"+(new Date().toLocaleString())+".json", "application/json")
 })

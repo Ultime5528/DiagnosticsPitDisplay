@@ -26,6 +26,7 @@ let [connectEvent, dispatchConnectEvent] = EventMock();
 let [disconnectEvent, dispatchDisconnectEvent] = EventMock();
 let [showAboutEvent, dispatchShowAboutEvent] = EventMock();
 let [exportRequestEvent, dispatchExportRequestEvent] = EventMock();
+let [exportLogsEvent, dispatchExportLogsEvent] = EventMock();
 
 let topicValueUpdateListeners = {};
 // Expose some APIs to be used in the renderer process
@@ -35,6 +36,7 @@ contextBridge.exposeInMainWorld("robot", {
     onDisconnect: disconnectEvent,
     onShowAbout: showAboutEvent,
     onExportRequest: exportRequestEvent,
+    onExportLogsRequest: exportLogsEvent,
     getTopicUpdateEvent: (topic) => {
         ipcRenderer.invoke("subscribe-to-topic", topic);
         if(!topicValueUpdateListeners[topic]) {
@@ -73,18 +75,20 @@ ipcRenderer.on("robot-connection-update", (_, connected) => {
     lastConnected = connected;
 })
 
-ipcRenderer.on("show-about", () => {
-    dispatchShowAboutEvent();
-})
+ipcRenderer.on("show-about", dispatchShowAboutEvent)
 
 // Receive topic value updates
 ipcRenderer.on("topic-value-update", (_, topic, value) => {
     if(topicValueUpdateListeners[topic]) topicValueUpdateListeners[topic][1](value);
 })
 // END NT API
-
-ipcRenderer.on("export-all", async () => dispatchExportRequestEvent())
-
+ipcRenderer.on("log", (_, ...args) => {
+    console.log(...args);
+})
+ipcRenderer.on("export-all", dispatchExportRequestEvent)
+ipcRenderer.on("export-logs", (_, logs) => {
+    dispatchExportLogsEvent(logs);
+})
 document.addEventListener('DOMContentLoaded', () => {
     ipcRenderer.invoke("get-version").then(version => {
         document.getElementById("version").innerText = "v"+version;
